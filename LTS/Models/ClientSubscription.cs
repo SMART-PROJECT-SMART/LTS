@@ -1,4 +1,4 @@
-﻿using Core.Common.Enums;
+using Core.Common.Enums;
 
 namespace LTS.Models
 {
