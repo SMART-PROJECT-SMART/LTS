@@ -2,7 +2,8 @@
 {
     public struct ClientSubscription
     {
-        public string ConnectionId { get; set; }
+        public string? ConnectionId { get; set; }
         public string SessionId { get; set; }
+        public DateTime LastActive { get; set; }
     }
 }
