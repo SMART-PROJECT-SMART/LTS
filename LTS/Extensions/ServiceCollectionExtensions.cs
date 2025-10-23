@@ -1,6 +1,11 @@
-﻿namespace LTS.Extentions
+﻿namespace LTS.Extensions
 {
-    public class ServiceCollectionExtentions
+    public static class ServiceCollectionExtensions
     {
+        public static IServiceCollection AddUAVWantedFieldsManager(this IServiceCollection services)
+        {
+            services.AddSingleton<Services.UAVWantedFieldsManager.IUAVWantedFieldsManager, Services.UAVWantedFieldsManager.UAVWantedFieldsManager>();
+            return services;
+        }
     }
 }
