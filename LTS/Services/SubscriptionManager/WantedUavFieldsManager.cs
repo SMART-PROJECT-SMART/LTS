@@ -20,9 +20,9 @@ namespace LTS.Services.SubscriptionManager
         {
             var sessionFields = new Dictionary<int, HashSet<TelemetryFields>>();
 
-            foreach (var uavWantedFields in uavsWantedFields)
+            foreach (KeyValuePair<int,IEnumerable<TelemetryFields>> uavWantedFields in uavsWantedFields)
             {
-                var uavId = uavWantedFields.Key;
+                int uavId = uavWantedFields.Key;
                 var fieldsSet = new HashSet<TelemetryFields>(uavWantedFields.Value);
                 sessionFields[uavId] = fieldsSet;
             }
@@ -37,20 +37,19 @@ namespace LTS.Services.SubscriptionManager
 
         public void UpdateWantedUAVFields(string sessionId, Dictionary<int, IEnumerable<TelemetryFields>> newWantedUAVsFields)
         {
-            var affectedUavIds = new HashSet<int>();
+            Dictionary<int,HashSet<TelemetryFields>> existingSession = _sessionsWantedUAVFields[sessionId];
 
-            if (_sessionsWantedUAVFields.TryGetValue(sessionId, out var existingSession))
-            {
-                foreach (var uavId in newWantedUAVsFields.Keys)
-                {
-                    affectedUavIds.Add(uavId);
-                }
-            }
+            var oldUavIds = new HashSet<int>(existingSession.Keys);
+            var newUavIds = new HashSet<int>(newWantedUAVsFields.Keys);
 
-            foreach (var newWantedUAVField in newWantedUAVsFields)
+            var affectedUavIds = new HashSet<int>(oldUavIds);
+            affectedUavIds.UnionWith(newUavIds);
+
+            existingSession.Clear();
+
+            foreach (var (uavId, wantedFields) in newWantedUAVsFields)
             {
-                _sessionsWantedUAVFields[sessionId][newWantedUAVField.Key] =
-                    new HashSet<TelemetryFields>(newWantedUAVField.Value);
+                existingSession[uavId] = new HashSet<TelemetryFields>(wantedFields);
             }
 
             foreach (var uavId in affectedUavIds)
@@ -61,15 +60,12 @@ namespace LTS.Services.SubscriptionManager
 
         public bool RemoveSession(string sessionId)
         {
-            if (_sessionsWantedUAVFields.TryRemove(sessionId, out var removedSession))
+            if (!_sessionsWantedUAVFields.TryRemove(sessionId, out var removedSession)) return false;
+            foreach (var uavId in removedSession.Keys)
             {
-                foreach (var uavId in removedSession.Keys)
-                {
-                    RecalculateGlobalFieldsForUav(uavId);
-                }
-                return true;
+                RecalculateGlobalFieldsForUav(uavId);
             }
-            return false;
+            return true;
         }
 
         public IEnumerable<int> GetAllWantedUAVs()
