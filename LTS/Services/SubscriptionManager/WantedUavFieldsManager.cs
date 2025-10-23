@@ -7,6 +7,15 @@ namespace LTS.Services.SubscriptionManager
     {
         private readonly ConcurrentDictionary<string, Dictionary<int, HashSet<TelemetryFields>>>
             _sessionsWantedUAVFields;
+        private readonly ConcurrentDictionary<int, HashSet<TelemetryFields>>
+            _globalWantedFieldsByUavId;
+
+        public WantedUavFieldsManager()
+        {
+            _sessionsWantedUAVFields = new ConcurrentDictionary<string, Dictionary<int, HashSet<TelemetryFields>>>();
+            _globalWantedFieldsByUavId = new ConcurrentDictionary<int, HashSet<TelemetryFields>>();
+        }
+
         public void CreateSession(string sessionId, Dictionary<int, IEnumerable<TelemetryFields>> uavsWantedFields)
         {
             var sessionFields = new Dictionary<int, HashSet<TelemetryFields>>();
@@ -19,33 +28,53 @@ namespace LTS.Services.SubscriptionManager
             }
 
             _sessionsWantedUAVFields[sessionId] = sessionFields;
+
+            foreach (var uavId in sessionFields.Keys)
+            {
+                RecalculateGlobalFieldsForUav(uavId);
+            }
         }
 
         public void UpdateWantedUAVFields(string sessionId, Dictionary<int, IEnumerable<TelemetryFields>> newWantedUAVsFields)
         {
+            var affectedUavIds = new HashSet<int>();
+
+            if (_sessionsWantedUAVFields.TryGetValue(sessionId, out var existingSession))
+            {
+                foreach (var uavId in newWantedUAVsFields.Keys)
+                {
+                    affectedUavIds.Add(uavId);
+                }
+            }
+
             foreach (var newWantedUAVField in newWantedUAVsFields)
             {
                 _sessionsWantedUAVFields[sessionId][newWantedUAVField.Key] =
                     new HashSet<TelemetryFields>(newWantedUAVField.Value);
             }
+
+            foreach (var uavId in affectedUavIds)
+            {
+                RecalculateGlobalFieldsForUav(uavId);
+            }
         }
 
         public bool RemoveSession(string sessionId)
         {
-            return _sessionsWantedUAVFields.TryRemove(sessionId, out _);
+            if (_sessionsWantedUAVFields.TryRemove(sessionId, out var removedSession))
+            {
+                foreach (var uavId in removedSession.Keys)
+                {
+                    RecalculateGlobalFieldsForUav(uavId);
+                }
+                return true;
+            }
+            return false;
         }
 
         public IEnumerable<int> GetAllWantedUAVs()
         {
-            var allWantedUAVs = new HashSet<int>();
-            foreach (var sessionWantedUAVs in _sessionsWantedUAVFields.Values)
-            {
-                foreach (var uavId in sessionWantedUAVs.Keys)
-                {
-                    allWantedUAVs.Add(uavId);
-                }
-            }
-            return allWantedUAVs;
+            return _globalWantedFieldsByUavId.Keys;
         }
 
         public Dictionary<int, HashSet<TelemetryFields>>? GetSessionById(string sessionId)
@@ -60,15 +89,29 @@ namespace LTS.Services.SubscriptionManager
 
         public HashSet<TelemetryFields>? GetGlobalWantedFieldsForUAV(int uavId)
         {
-            var globalWantedUAVFields =  new HashSet<TelemetryFields>();
+            return _globalWantedFieldsByUavId.GetValueOrDefault(uavId);
+        }
+
+        private void RecalculateGlobalFieldsForUav(int uavId)
+        {
+            var globalFields = new HashSet<TelemetryFields>();
+            
             foreach (var sessionWantedUAVs in _sessionsWantedUAVFields.Values)
             {
                 if (sessionWantedUAVs.TryGetValue(uavId, out var wantedFields))
                 {
-                    globalWantedUAVFields.UnionWith(wantedFields);
+                    globalFields.UnionWith(wantedFields);
                 }
             }
-            return globalWantedUAVFields.Count > 0 ? globalWantedUAVFields : null;
+
+            if (globalFields.Count > 0)
+            {
+                _globalWantedFieldsByUavId[uavId] = globalFields;
+            }
+            else
+            {
+                _globalWantedFieldsByUavId.TryRemove(uavId, out _);
+            }
         }
     }
 }
