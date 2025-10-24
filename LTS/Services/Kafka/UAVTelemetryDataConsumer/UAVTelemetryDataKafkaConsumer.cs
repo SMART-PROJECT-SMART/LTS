@@ -10,10 +10,11 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
     {
         private readonly IConsumer<string, byte[]> _kafkaConsumer;
         private readonly IWantedUAVFieldsManager _wantedUAVFieldsManager;
-        public UAVTelemetryDataKafkaConsumer(IConsumer<string, byte[]> kafkaConsumer, IWantedUAVFieldsManager wantedUavFieldsManager, IOptions<KafkaConsumerConfiguration> kafkaConsumerConfiguration)
+
+        public UAVTelemetryDataKafkaConsumer(IWantedUAVFieldsManager wantedUavFieldsManager, IOptions<KafkaConsumerConfiguration> kafkaConsumerConfiguration)
         {
-            _kafkaConsumer = kafkaConsumer;
-            _UAVTopicToConsume = new HashSet<int>();
+            _wantedUAVFieldsManager = wantedUavFieldsManager;
+            
             var consumerConfig = new ConsumerConfig
             {
                 BootstrapServers = kafkaConsumerConfiguration.Value.BootstrapServers,
@@ -33,7 +34,7 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
             return _kafkaConsumer.Consume();
         }
 
-        public void UpdateSubscriptions()
+        public void UpdateUAVTopicsToConsume()
         {
             IEnumerable<int> wantedUAVToConsume = _wantedUAVFieldsManager.GetAllWantedUAVs();
             List<string> wantedTopicToConsume = wantedUAVToConsume
