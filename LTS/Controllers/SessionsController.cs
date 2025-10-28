@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using LTS.Services.SubscriptionManager;
 using Core.Common.Enums;
+using LTS.Dto;
 
 namespace LTS.Controllers
 {
@@ -16,16 +17,16 @@ namespace LTS.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateSession([FromBody] CreateSessionRequest request)
+        public IActionResult CreateSession([FromBody] CreateSessionDto request)
         {
 
-            _wantedFieldsManager.CreateSession(request., request.WantedFields);
+            _wantedFieldsManager.CreateSession(request.SessionId, request.WantedFields);
 
-            return Ok(new { SessionId = sessionId });
+            return Ok(new { SessionId = request.SessionId });
         }
 
         [HttpPut("{sessionId}")]
-        public IActionResult UpdateSession(string sessionId, [FromBody] UpdateSessionRequest request)
+        public IActionResult UpdateSession(string sessionId, [FromBody] UpdateWantedFieldsDto request)
         {
             if (_wantedFieldsManager.GetSessionWantedFieldsById(sessionId) != null)
             {
@@ -53,24 +54,14 @@ namespace LTS.Controllers
         [HttpGet("{sessionId}")]
         public IActionResult GetSession(string sessionId)
         {
-            var session = _wantedFieldsManager.GetSessionWantedFieldsById(sessionId);
+            Dictionary<int,HashSet<TelemetryFields>>? sessionWantedFields = _wantedFieldsManager.GetSessionWantedFieldsById(sessionId);
 
-            if (session == null)
+            if (sessionWantedFields == null)
             {
                 return NotFound($"Session {sessionId} not found");
             }
 
-            return Ok(new { SessionId = sessionId, WantedFields = session });
+            return Ok(new { SessionId = sessionId, WantedFields = sessionWantedFields });
         }
-    }
-
-    public class CreateSessionRequest
-    {
-        public Dictionary<int, IEnumerable<TelemetryFields>> WantedFields { get; set; }
-    }
-
-    public class UpdateSessionRequest
-    {
-        public Dictionary<int, IEnumerable<TelemetryFields>> WantedFields { get; set; }
     }
 }

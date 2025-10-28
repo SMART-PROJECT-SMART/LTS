@@ -3,6 +3,8 @@
 namespace LTS.Dto
 {
     public class UpdateWantedFieldsDto
-    { public Dictionary<int, IEnumerable<TelemetryFields>> WantedFields { get; set; }
+    { 
+        public Dictionary<int, IEnumerable<TelemetryFields>> WantedFields { get; set; }
+
     }
 }

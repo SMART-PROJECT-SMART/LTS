@@ -88,6 +88,11 @@ namespace LTS.Services.SubscriptionManager
             return _globalWantedFieldsByUavId.GetValueOrDefault(uavId);
         }
 
+        public bool DoesSessionExist(string sessionId)
+        {
+            return _sessionsWantedUAVFields.ContainsKey(sessionId);
+        }
+
         private void RecalculateGlobalFieldsForUav(int uavId)
         {
             var globalFields = new HashSet<TelemetryFields>();
