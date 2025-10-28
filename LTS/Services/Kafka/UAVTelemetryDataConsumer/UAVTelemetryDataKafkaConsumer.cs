@@ -36,6 +36,7 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
 
         public void UpdateUAVTopicsToConsume()
         {
+            _kafkaConsumer.Unsubscribe();
             IEnumerable<int> wantedUAVToConsume = _wantedUAVFieldsManager.GetAllWantedUAVs();
             List<string> wantedTopicToConsume = wantedUAVToConsume
                 .Select(tailId => $"{LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX}{tailId}").ToList();
