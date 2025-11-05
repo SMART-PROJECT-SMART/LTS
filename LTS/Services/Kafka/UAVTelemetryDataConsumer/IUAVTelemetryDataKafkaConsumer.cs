@@ -2,7 +2,7 @@
 
 namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
 {
-    public interface IUAVTelemetryDataKafkaConsumer
+    public interface IUAVTelemetryDataKafkaConsumer : IDisposable
     {
         public ConsumeResult<string, byte[]> ConsumeUAVTelemetryData();
         public void SubsribeToTopic(string tailId);

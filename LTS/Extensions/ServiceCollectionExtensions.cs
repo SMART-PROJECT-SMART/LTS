@@ -1,6 +1,7 @@
 ﻿using LTS.Common;
 using LTS.Models;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer;
+using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
 using LTS.Services.SubscriptionManager;
 using LTS.Services.SubscriptionManager;
 
@@ -14,7 +15,8 @@ namespace LTS.Extensions
                 appConfiguration.GetSection(LTSConstants.Kafka.KAFKA_CONFIGURATION_SECTION));
             
             AddUAVTelemetryDataKafkaConsumer(services);
-            
+            AddUAVTelemetryConsumerManager(services);
+
             return services;
         }
 
@@ -24,9 +26,15 @@ namespace LTS.Extensions
             return services;
         }
 
+        private static IServiceCollection AddUAVTelemetryConsumerManager(this IServiceCollection services)
+        {
+            services.AddSingleton<IUAVTelemetryDataKafkaConsumerManager, UAVTelemetryDataKafkaConsumerManager>();
+            return services;
+        }
+
         private static IServiceCollection AddUAVTelemetryDataKafkaConsumer(this IServiceCollection services)
         {
-            services.AddSingleton<IUAVTelemetryDataKafkaConsumer, UAVTelemetryDataKafkaConsumer>();
+            services.AddTransient<IUAVTelemetryDataKafkaConsumer, UAVTelemetryDataKafkaConsumer>();
             return services;
         }
     }
