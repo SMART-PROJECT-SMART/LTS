@@ -7,6 +7,12 @@ namespace LTS.Services.Quartz.UAVTelemetryDataUpdater
     public class UAVTelemetryDataStorageUpdateSchedular : IUAVTelemetryDataStorageUpdateSchedular
     {
         private readonly IScheduler _scheduler;
+
+        public UAVTelemetryDataStorageUpdateSchedular(ISchedulerFactory schedulerFactory)
+        {
+            _scheduler = schedulerFactory.GetScheduler().Result;
+        }
+
         public async Task<bool> StartSchedular(int intervalSeconds)
         {
             IJobDetail job = CreateUAVTelemetryDataConsumerJob();

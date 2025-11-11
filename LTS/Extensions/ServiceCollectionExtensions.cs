@@ -3,7 +3,10 @@ using LTS.Models;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
 using LTS.Services.SubscriptionManager;
-using LTS.Services.SubscriptionManager;
+using LTS.Services.UAVDataStorage;
+using LTS.Services.Quartz.UAVTelemetryDataUpdater;
+using LTS.Services.Quartz.Jobs;
+using Quartz;
 
 namespace LTS.Extensions
 {
@@ -23,6 +26,39 @@ namespace LTS.Extensions
         public static IServiceCollection AddWantedUAVFieldsManager(this IServiceCollection services)
         {
             services.AddSingleton<IWantedUAVFieldsManager, WantedUavFieldsManager>();
+            return services;
+        }
+
+        public static IServiceCollection AddUAVTelemetryDataStorage(this IServiceCollection services)
+        {
+            services.AddSingleton<IUAVTelemetryDataStorage, UAVTelemetryDataStorage>();
+            return services;
+        }
+
+        public static IServiceCollection AddQuartzScheduler(this IServiceCollection services)
+        {
+            // Add Quartz services
+            services.AddQuartz(q =>
+            {
+                // Use a scoped job factory to support DI in jobs
+                q.UseMicrosoftDependencyInjectionJobFactory();
+
+                // Register the job
+                q.AddJob<UAVTelemetryDataConsumeJob>(opts => opts
+                    .WithIdentity(LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_ID,
+                    LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP));
+            });
+
+            // Add Quartz hosted service
+            services.AddQuartzHostedService(options =>
+            {
+                // Wait for jobs to complete before shutdown
+                options.WaitForJobsToComplete = true;
+            });
+
+            // Register the scheduler service
+            services.AddSingleton<IUAVTelemetryDataStorageUpdateSchedular, UAVTelemetryDataStorageUpdateSchedular>();
+
             return services;
         }
 
