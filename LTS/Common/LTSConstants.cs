@@ -12,7 +12,7 @@
         {
             public const string SESSION_ID_FIELD = "sessionId";
             public const string WANTED_UAVS_FIELDS_FIELD = "wantedUAVsFields";
-            public const string REVICE_TELEMETRY_DATA_METHOD = "ReceiveTelemetryData";
+            public const string RECIVE_TELEMETRY_DATA_METHOD = "ReceiveTelemetryData";
         }
     }
 }
