@@ -4,8 +4,14 @@ namespace LTS.Services.SubscriptionManager
 {
     public interface IWantedUAVFieldsManager
     {
-        void CreateSession(string sessionId, IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> fieldSubscriptions);
-        void UpdateWantedUAVFields(string sessionId, IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> fieldSubscriptions);
+        void CreateSession(
+            string sessionId,
+            IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> fieldSubscriptions
+        );
+        void UpdateWantedUAVFields(
+            string sessionId,
+            IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> fieldSubscriptions
+        );
         bool RemoveSession(string sessionId);
         IEnumerable<int> GetAllWantedUAVs();
         Dictionary<int, HashSet<TelemetryFields>>? GetSessionWantedFieldsById(string sessionId);

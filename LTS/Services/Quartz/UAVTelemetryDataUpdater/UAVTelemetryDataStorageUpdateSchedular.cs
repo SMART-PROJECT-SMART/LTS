@@ -30,20 +30,25 @@ namespace LTS.Services.Quartz.UAVTelemetryDataUpdater
 
         private IJobDetail CreateUAVTelemetryDataConsumerJob()
         {
-            return JobBuilder.Create<UAVTelemetryDataConsumeJob>()
-                .WithIdentity(LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_ID,
-                    LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP)
+            return JobBuilder
+                .Create<UAVTelemetryDataConsumeJob>()
+                .WithIdentity(
+                    LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_ID,
+                    LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP
+                )
                 .Build();
         }
+
         private ITrigger CreateUAVTelemetryDataConsumerTrigger(int intervalSeconds)
         {
-            return TriggerBuilder.Create()
-                .WithIdentity(LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_TRIGGER_ID,
-                    LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP)
+            return TriggerBuilder
+                .Create()
+                .WithIdentity(
+                    LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_TRIGGER_ID,
+                    LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP
+                )
                 .StartNow()
-                .WithSimpleSchedule(x => x
-                    .WithIntervalInSeconds(intervalSeconds)
-                    .RepeatForever())
+                .WithSimpleSchedule(x => x.WithIntervalInSeconds(intervalSeconds).RepeatForever())
                 .Build();
         }
     }

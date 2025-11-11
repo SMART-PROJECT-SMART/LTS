@@ -10,15 +10,16 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
     {
         private readonly IConsumer<string, byte[]> _kafkaConsumer;
 
-        public UAVTelemetryDataKafkaConsumer(IOptions<KafkaConsumerConfiguration> kafkaConsumerConfiguration)
+        public UAVTelemetryDataKafkaConsumer(
+            IOptions<KafkaConsumerConfiguration> kafkaConsumerConfiguration
+        )
         {
-            
             var consumerConfig = new ConsumerConfig
             {
                 BootstrapServers = kafkaConsumerConfiguration.Value.BootstrapServers,
                 GroupId = kafkaConsumerConfiguration.Value.GroupId,
                 EnableAutoCommit = kafkaConsumerConfiguration.Value.EnableAutoCommit,
-                AutoOffsetReset = AutoOffsetReset.Latest
+                AutoOffsetReset = AutoOffsetReset.Latest,
             };
 
             _kafkaConsumer = new ConsumerBuilder<string, byte[]>(consumerConfig)

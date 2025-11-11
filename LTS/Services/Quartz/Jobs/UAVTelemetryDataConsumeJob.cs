@@ -1,10 +1,10 @@
-﻿using Confluent.Kafka;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using Confluent.Kafka;
 using Core.Common.Enums;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
 using LTS.Services.UAVDataStorage;
 using Quartz;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using static System.Int32;
 
 namespace LTS.Services.Quartz.Jobs
@@ -16,7 +16,8 @@ namespace LTS.Services.Quartz.Jobs
 
         public UAVTelemetryDataConsumeJob(
             IUAVTelemetryDataKafkaConsumerManager uavTelemetryDataKafkaConsumerManager,
-            IUAVTelemetryDataStorage uavTelemetryDataStorage)
+            IUAVTelemetryDataStorage uavTelemetryDataStorage
+        )
         {
             _uavTelemetryDataKafkaConsumerManager = uavTelemetryDataKafkaConsumerManager;
             _uavTelemetryDataStorage = uavTelemetryDataStorage;
@@ -24,29 +25,39 @@ namespace LTS.Services.Quartz.Jobs
 
         public Task Execute(IJobExecutionContext context)
         {
-            foreach (ConsumeResult<string, byte[]> consumeResult in _uavTelemetryDataKafkaConsumerManager
-                         .ConsumeUAVTelemetryData())
+            foreach (
+                ConsumeResult<
+                    string,
+                    byte[]
+                > consumeResult in _uavTelemetryDataKafkaConsumerManager.ConsumeUAVTelemetryData()
+            )
             {
                 TryParse(consumeResult.Message.Key, out int tailId);
 
-                IEnumerable<KeyValuePair<TelemetryFields,double>> telemetryData = DeserializeTelemetryData(consumeResult.Message.Value);
+                IEnumerable<KeyValuePair<TelemetryFields, double>> telemetryData =
+                    DeserializeTelemetryData(consumeResult.Message.Value);
 
                 _uavTelemetryDataStorage.SaveUAVTelemetryData(tailId, telemetryData);
             }
             return Task.CompletedTask;
         }
 
-        private IEnumerable<KeyValuePair<TelemetryFields, double>> DeserializeTelemetryData(byte[] data)
+        private IEnumerable<KeyValuePair<TelemetryFields, double>> DeserializeTelemetryData(
+            byte[] data
+        )
         {
-                string json = System.Text.Encoding.UTF8.GetString(data);
-                
-                var options = new JsonSerializerOptions
-                {
-                    Converters = { new JsonStringEnumConverter() }
-                };
-                
-                var telemetryDict = JsonSerializer.Deserialize<Dictionary<TelemetryFields, double>>(json, options)!;
-                return telemetryDict;
+            string json = System.Text.Encoding.UTF8.GetString(data);
+
+            var options = new JsonSerializerOptions
+            {
+                Converters = { new JsonStringEnumConverter() },
+            };
+
+            var telemetryDict = JsonSerializer.Deserialize<Dictionary<TelemetryFields, double>>(
+                json,
+                options
+            )!;
+            return telemetryDict;
         }
     }
 }

@@ -18,8 +18,10 @@
         public static class Quartz
         {
             public const string UAV_TELEMETRY_DATA_CONSUME_JOB_ID = "UAVTelemetryDataConsumeJob";
-            public const string UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP = "UAVTelemetryDataConsumeJobGroup";
-            public const string UAV_TELEMETRY_DATA_CONSUME_TRIGGER_ID = "UAVTelemetryDataConsumeTrigger";
+            public const string UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP =
+                "UAVTelemetryDataConsumeJobGroup";
+            public const string UAV_TELEMETRY_DATA_CONSUME_TRIGGER_ID =
+                "UAVTelemetryDataConsumeTrigger";
         }
     }
 }

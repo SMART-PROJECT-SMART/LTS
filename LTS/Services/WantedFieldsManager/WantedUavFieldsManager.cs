@@ -5,22 +5,32 @@ namespace LTS.Services.SubscriptionManager
 {
     public class WantedUavFieldsManager : IWantedUAVFieldsManager
     {
-        private readonly ConcurrentDictionary<string, Dictionary<int, HashSet<TelemetryFields>>>
-            _sessionsWantedUAVFields;
-        private readonly ConcurrentDictionary<int, HashSet<TelemetryFields>>
-            _globalWantedFieldsByUavId;
+        private readonly ConcurrentDictionary<
+            string,
+            Dictionary<int, HashSet<TelemetryFields>>
+        > _sessionsWantedUAVFields;
+        private readonly ConcurrentDictionary<
+            int,
+            HashSet<TelemetryFields>
+        > _globalWantedFieldsByUavId;
 
         public WantedUavFieldsManager()
         {
-            _sessionsWantedUAVFields = new ConcurrentDictionary<string, Dictionary<int, HashSet<TelemetryFields>>>();
+            _sessionsWantedUAVFields =
+                new ConcurrentDictionary<string, Dictionary<int, HashSet<TelemetryFields>>>();
             _globalWantedFieldsByUavId = new ConcurrentDictionary<int, HashSet<TelemetryFields>>();
         }
 
-        public void CreateSession(string sessionId, IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> uavsWantedFields)
+        public void CreateSession(
+            string sessionId,
+            IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> uavsWantedFields
+        )
         {
             var sessionFields = new Dictionary<int, HashSet<TelemetryFields>>();
 
-            foreach (KeyValuePair<int,IEnumerable<TelemetryFields>> uavWantedFields in uavsWantedFields)
+            foreach (
+                KeyValuePair<int, IEnumerable<TelemetryFields>> uavWantedFields in uavsWantedFields
+            )
             {
                 int uavId = uavWantedFields.Key;
                 var fieldsSet = new HashSet<TelemetryFields>(uavWantedFields.Value);
@@ -35,9 +45,14 @@ namespace LTS.Services.SubscriptionManager
             }
         }
 
-        public void UpdateWantedUAVFields(string sessionId, IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> newWantedUAVsFields)
+        public void UpdateWantedUAVFields(
+            string sessionId,
+            IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> newWantedUAVsFields
+        )
         {
-            Dictionary<int,HashSet<TelemetryFields>> existingSession = _sessionsWantedUAVFields[sessionId];
+            Dictionary<int, HashSet<TelemetryFields>> existingSession = _sessionsWantedUAVFields[
+                sessionId
+            ];
 
             var oldUavIds = new HashSet<int>(existingSession.Keys);
             var newUavIds = new HashSet<int>(newWantedUAVsFields.ToDictionary().Keys);
@@ -60,7 +75,8 @@ namespace LTS.Services.SubscriptionManager
 
         public bool RemoveSession(string sessionId)
         {
-            if (!_sessionsWantedUAVFields.TryRemove(sessionId, out var removedSession)) return false;
+            if (!_sessionsWantedUAVFields.TryRemove(sessionId, out var removedSession))
+                return false;
             foreach (var uavId in removedSession.Keys)
             {
                 RecalculateGlobalFieldsForUav(uavId);
@@ -73,7 +89,9 @@ namespace LTS.Services.SubscriptionManager
             return _globalWantedFieldsByUavId.Keys;
         }
 
-        public Dictionary<int, HashSet<TelemetryFields>>? GetSessionWantedFieldsById(string sessionId)
+        public Dictionary<int, HashSet<TelemetryFields>>? GetSessionWantedFieldsById(
+            string sessionId
+        )
         {
             return _sessionsWantedUAVFields.GetValueOrDefault(sessionId);
         }
@@ -96,7 +114,7 @@ namespace LTS.Services.SubscriptionManager
         private void RecalculateGlobalFieldsForUav(int uavId)
         {
             var globalFields = new HashSet<TelemetryFields>();
-            
+
             foreach (var sessionWantedUAVs in _sessionsWantedUAVFields.Values)
             {
                 if (sessionWantedUAVs.TryGetValue(uavId, out var wantedFields))

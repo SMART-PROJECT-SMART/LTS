@@ -8,24 +8,27 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
     {
         private readonly Dictionary<string, IUAVTelemetryDataKafkaConsumer> _consumers;
         private readonly IServiceProvider _serviceProvider;
-        
+
         public UAVTelemetryDataKafkaConsumerManager(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _consumers = new Dictionary<string, IUAVTelemetryDataKafkaConsumer>();
         }
-        
+
         public void AddConsumer(string tailId)
         {
-            IUAVTelemetryDataKafkaConsumer? newConsumer = _serviceProvider.GetService<IUAVTelemetryDataKafkaConsumer>();
-            if (newConsumer == null) return;
+            IUAVTelemetryDataKafkaConsumer? newConsumer =
+                _serviceProvider.GetService<IUAVTelemetryDataKafkaConsumer>();
+            if (newConsumer == null)
+                return;
             newConsumer.SubsribeToTopic(tailId);
             _consumers.Add(tailId, newConsumer);
         }
 
         public void RemoveConsumer(string tailId)
         {
-            if (!_consumers.TryGetValue(tailId, out var consumerToRemove)) return;
+            if (!_consumers.TryGetValue(tailId, out var consumerToRemove))
+                return;
             consumerToRemove.Dispose();
             _consumers.Remove(tailId);
         }

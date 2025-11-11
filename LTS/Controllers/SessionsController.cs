@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using LTS.Services.SubscriptionManager;
-using Core.Common.Enums;
+﻿using Core.Common.Enums;
 using LTS.Dto;
+using LTS.Services.SubscriptionManager;
+using Microsoft.AspNetCore.Mvc;
 
 namespace LTS.Controllers
 {
@@ -19,14 +19,16 @@ namespace LTS.Controllers
         [HttpPost]
         public IActionResult CreateSession([FromBody] CreateSessionDto request)
         {
-
             _wantedFieldsManager.CreateSession(request.SessionId, request.WantedFields);
 
             return Ok(new { SessionId = request.SessionId });
         }
 
         [HttpPut("{sessionId}")]
-        public IActionResult UpdateSession(string sessionId, [FromBody] UpdateWantedFieldsDto request)
+        public IActionResult UpdateSession(
+            string sessionId,
+            [FromBody] UpdateWantedFieldsDto request
+        )
         {
             if (_wantedFieldsManager.GetSessionWantedFieldsById(sessionId) != null)
             {
@@ -54,7 +56,8 @@ namespace LTS.Controllers
         [HttpGet("{sessionId}")]
         public IActionResult GetSession(string sessionId)
         {
-            Dictionary<int,HashSet<TelemetryFields>>? sessionWantedFields = _wantedFieldsManager.GetSessionWantedFieldsById(sessionId);
+            Dictionary<int, HashSet<TelemetryFields>>? sessionWantedFields =
+                _wantedFieldsManager.GetSessionWantedFieldsById(sessionId);
 
             if (sessionWantedFields == null)
             {

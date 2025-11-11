@@ -7,14 +7,15 @@ namespace LTS.Dto
         public string SessionId { get; set; }
         public Dictionary<int, IEnumerable<TelemetryFields>> WantedFields { get; set; }
 
-        public CreateSessionDto(string sessionId, Dictionary<int, IEnumerable<TelemetryFields>> wantedFields)
+        public CreateSessionDto(
+            string sessionId,
+            Dictionary<int, IEnumerable<TelemetryFields>> wantedFields
+        )
         {
             SessionId = sessionId;
             WantedFields = wantedFields;
         }
 
-        public CreateSessionDto()
-        {
-        }
+        public CreateSessionDto() { }
     }
 }
