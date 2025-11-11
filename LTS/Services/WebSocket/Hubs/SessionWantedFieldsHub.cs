@@ -2,16 +2,16 @@
 using LTS.Common;
 using Microsoft.AspNetCore.SignalR;
 using LTS.Services.SubscriptionManager;
+using System.Collections.Concurrent;
 
 namespace LTS.Services.WebSocket.Hubs
 {
     public class SessionWantedFieldsHub : Hub
     {
-        private readonly IWantedUAVFieldsManager _wantedFieldsManager;
+        private static readonly ConcurrentDictionary<string, string> _sessionsClient = new();
 
-        public SessionWantedFieldsHub(IWantedUAVFieldsManager wantedFieldsManager)
+        public SessionWantedFieldsHub()
         {
-            _wantedFieldsManager = wantedFieldsManager;
         }
 
         public override Task OnConnectedAsync()
@@ -21,17 +21,30 @@ namespace LTS.Services.WebSocket.Hubs
 
             if (!string.IsNullOrEmpty(sessionId))
             {
-                if (_wantedFieldsManager.DoesSessionExist(sessionId)) return base.OnConnectedAsync();
+                _sessionsClient[sessionId] = Context.ConnectionId;
+                return base.OnConnectedAsync();
             }
 
             Context.Abort();
             return Task.CompletedTask;
-
         }
 
         public override Task OnDisconnectedAsync(Exception? exception)
         {
+            var sessionToRemove = _sessionsClient.FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
+            if (sessionToRemove != null)
+            {
+                _sessionsClient.TryRemove(sessionToRemove, out _);
+            }
             return base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task SendTelemetryData(string sessionId,IEnumerable<KeyValuePair<TelemetryFields,double>> telemetryData)
+        {
+            if (_sessionsClient.TryGetValue(sessionId, out var connectionId))
+            {
+                await Clients.Client(connectionId).SendAsync(LTSConstants.WebSocket.RECIVE_TELEMETRY_DATA_METHOD,telemetryData);
+            }
         }
     }
 }
