@@ -2,8 +2,6 @@
 .vs/
 bin/
 obj/
-LTS/obj/
-LTS/obj/**
 # User-specific files
 *.rsuser
 *.suo
