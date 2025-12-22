@@ -17,6 +17,11 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
 
         public void AddConsumer(string tailId)
         {
+            if (_consumers.ContainsKey(tailId))
+            {
+                return;
+            }
+
             IUAVTelemetryDataKafkaConsumer? newConsumer =
                 _serviceProvider.GetService<IUAVTelemetryDataKafkaConsumer>();
             if (newConsumer == null)

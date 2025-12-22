@@ -43,7 +43,7 @@ namespace LTS.Services.Quartz.Jobs
                 List<UAVTelemetryFieldsDto> uavDataList = sessionWantedFields
                     .Select(uavSubscription =>
                     {
-                        IEnumerable<KeyValuePair<TelemetryFields, double>> telemetryData =
+                        IEnumerable<KeyValuePair<TelemetryFields, double>>? telemetryData =
                             _uavTelemetryDataStorage.GetUAVTelemetryData(uavSubscription.Key);
 
                         Dictionary<TelemetryFields, double> filteredFields =

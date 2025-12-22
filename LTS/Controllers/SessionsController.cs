@@ -1,6 +1,8 @@
 ﻿using Core.Common.Enums;
 using LTS.Dto;
+using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
 using LTS.Services.SubscriptionManager;
+using LTS.Services.UAVDataStorage;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LTS.Controllers
@@ -10,16 +12,30 @@ namespace LTS.Controllers
     public class SessionsController : ControllerBase
     {
         private readonly IWantedUAVFieldsManager _wantedFieldsManager;
+        private readonly IUAVTelemetryDataKafkaConsumerManager _consumerManager;
+        private readonly IUAVTelemetryDataStorage _storage;
 
-        public SessionsController(IWantedUAVFieldsManager wantedFieldsManager)
+        public SessionsController(
+            IWantedUAVFieldsManager wantedFieldsManager,
+            IUAVTelemetryDataKafkaConsumerManager consumerManager,
+            IUAVTelemetryDataStorage storage
+        )
         {
             _wantedFieldsManager = wantedFieldsManager;
+            _consumerManager = consumerManager;
+            _storage = storage;
         }
 
         [HttpPost]
         public IActionResult CreateSession([FromBody] CreateSessionDto request)
         {
             _wantedFieldsManager.CreateSession(request.SessionId, request.WantedFields);
+
+            foreach (int tailId in request.WantedFields.Keys)
+            {
+                _storage.AddNewUAV(tailId);
+                _consumerManager.AddConsumer(tailId.ToString());
+            }
 
             return Ok(new { SessionId = request.SessionId });
         }
