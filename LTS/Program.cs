@@ -9,6 +9,7 @@ builder.Services.AddUAVTelemetryDataStorage();
 builder.Services.AddQuartzScheduler(builder.Configuration);
 
 WebApplication app = builder.Build();
+app.UseCors();
 app.UseRouting();
 app.MapControllers();
 app.ConfigureHub();

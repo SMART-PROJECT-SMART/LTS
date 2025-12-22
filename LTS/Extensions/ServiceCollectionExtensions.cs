@@ -27,6 +27,17 @@ namespace LTS.Extensions
                 });
             services.AddEndpointsApiExplorer();
             services.AddRouting();
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder
+                        .SetIsOriginAllowed(_ => true)
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+            });
             return services;
         }
         public static IServiceCollection AddKafkaServices(

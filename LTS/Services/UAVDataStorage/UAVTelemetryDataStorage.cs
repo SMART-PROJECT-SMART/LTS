@@ -34,9 +34,11 @@ namespace LTS.Services.UAVDataStorage
             _uavTelemetryData.TryRemove(tailId, out _);
         }
 
-        public IEnumerable<KeyValuePair<TelemetryFields, double>> GetUAVTelemetryData(int tailId)
+        public IEnumerable<KeyValuePair<TelemetryFields, double>>? GetUAVTelemetryData(int tailId)
         {
-            return _uavTelemetryData[tailId];
+            return _uavTelemetryData.TryGetValue(tailId, out Dictionary<TelemetryFields, double>? data)
+                ? data
+                : null;
         }
 
         public IEnumerable<(int TailId, IEnumerable<KeyValuePair<TelemetryFields, double>> TelemetryData)> GetAllUAVTelemetryData()

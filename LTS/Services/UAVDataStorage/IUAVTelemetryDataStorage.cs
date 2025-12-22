@@ -10,7 +10,7 @@ namespace LTS.Services.UAVDataStorage
             IEnumerable<KeyValuePair<TelemetryFields, double>> telemetryData
         );
         public void DeleteUAV(int tailId);
-        public IEnumerable<KeyValuePair<TelemetryFields, double>> GetUAVTelemetryData(int tailId);
+        public IEnumerable<KeyValuePair<TelemetryFields, double>>? GetUAVTelemetryData(int tailId);
         public IEnumerable<(int TailId, IEnumerable<KeyValuePair<TelemetryFields, double>> TelemetryData)> GetAllUAVTelemetryData();
     }
 }
