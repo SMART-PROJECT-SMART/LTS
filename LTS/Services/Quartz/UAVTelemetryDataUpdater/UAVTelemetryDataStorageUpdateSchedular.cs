@@ -15,11 +15,8 @@ namespace LTS.Services.Quartz.UAVTelemetryDataUpdater
 
         public async Task<bool> StartSchedular(int intervalSeconds)
         {
-            IJobDetail job = CreateUAVTelemetryDataConsumerJob();
             ITrigger trigger = CreateUAVTelemetryDataConsumerTrigger(intervalSeconds);
-
-            await _scheduler.ScheduleJob(job, trigger);
-            await _scheduler.Start();
+            await _scheduler.ScheduleJob(trigger);
             return true;
         }
 
@@ -28,25 +25,20 @@ namespace LTS.Services.Quartz.UAVTelemetryDataUpdater
             throw new NotImplementedException();
         }
 
-        private IJobDetail CreateUAVTelemetryDataConsumerJob()
-        {
-            return JobBuilder
-                .Create<UAVTelemetryDataConsumeJob>()
-                .WithIdentity(
-                    LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_ID,
-                    LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP
-                )
-                .Build();
-        }
-
         private ITrigger CreateUAVTelemetryDataConsumerTrigger(int intervalSeconds)
         {
+            JobKey jobKey = new JobKey(
+                LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_ID,
+                LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP
+            );
+
             return TriggerBuilder
                 .Create()
                 .WithIdentity(
                     LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_TRIGGER_ID,
                     LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP
                 )
+                .ForJob(jobKey)
                 .StartNow()
                 .WithSimpleSchedule(x => x.WithIntervalInSeconds(intervalSeconds).RepeatForever())
                 .Build();

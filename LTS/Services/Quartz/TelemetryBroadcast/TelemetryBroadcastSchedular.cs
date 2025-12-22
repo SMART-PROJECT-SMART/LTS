@@ -15,11 +15,8 @@ namespace LTS.Services.Quartz.TelemetryBroadcast
 
         public async Task<bool> StartSchedular(int intervalSeconds)
         {
-            IJobDetail job = CreateTelemetryBroadcastJob();
             ITrigger trigger = CreateTelemetryBroadcastTrigger(intervalSeconds);
-
-            await _scheduler.ScheduleJob(job, trigger);
-            await _scheduler.Start();
+            await _scheduler.ScheduleJob(trigger);
             return true;
         }
 
@@ -28,25 +25,20 @@ namespace LTS.Services.Quartz.TelemetryBroadcast
             throw new NotImplementedException();
         }
 
-        private IJobDetail CreateTelemetryBroadcastJob()
-        {
-            return JobBuilder
-                .Create<TelemetryBroadcastJob>()
-                .WithIdentity(
-                    LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_ID,
-                    LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_GROUP
-                )
-                .Build();
-        }
-
         private ITrigger CreateTelemetryBroadcastTrigger(int intervalSeconds)
         {
+            JobKey jobKey = new JobKey(
+                LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_ID,
+                LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_GROUP
+            );
+
             return TriggerBuilder
                 .Create()
                 .WithIdentity(
                     LTSConstants.Quartz.TELEMETRY_BROADCAST_TRIGGER_ID,
                     LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_GROUP
                 )
+                .ForJob(jobKey)
                 .StartNow()
                 .WithSimpleSchedule(x => x.WithIntervalInSeconds(intervalSeconds).RepeatForever())
                 .Build();
