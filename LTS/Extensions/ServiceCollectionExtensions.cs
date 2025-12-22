@@ -3,6 +3,7 @@ using LTS.Models;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
 using LTS.Services.Quartz.Jobs;
+using LTS.Services.Quartz.TelemetryBroadcast;
 using LTS.Services.Quartz.UAVTelemetryDataUpdater;
 using LTS.Services.SubscriptionManager;
 using LTS.Services.UAVDataStorage;
@@ -61,6 +62,14 @@ namespace LTS.Extensions
                     )
                     .StoreDurably()
                 );
+
+                q.AddJob<TelemetryBroadcastJob>(opts =>
+                    opts.WithIdentity(
+                        LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_ID,
+                        LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_GROUP
+                    )
+                    .StoreDurably()
+                );
             });
 
             services.AddQuartzHostedService(options =>
@@ -72,6 +81,8 @@ namespace LTS.Extensions
                 IUAVTelemetryDataStorageUpdateSchedular,
                 UAVTelemetryDataStorageUpdateSchedular
             >();
+
+            services.AddSingleton<ITelemetryBroadcastSchedular, TelemetryBroadcastSchedular>();
 
             return services;
         }
