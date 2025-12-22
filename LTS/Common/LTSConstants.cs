@@ -22,6 +22,14 @@
                 "UAVTelemetryDataConsumeJobGroup";
             public const string UAV_TELEMETRY_DATA_CONSUME_TRIGGER_ID =
                 "UAVTelemetryDataConsumeTrigger";
+            public const string TELEMETRY_BROADCAST_JOB_ID = "TelemetryBroadcastJob";
+            public const string TELEMETRY_BROADCAST_JOB_GROUP = "TelemetryBroadcastJobGroup";
+            public const string TELEMETRY_BROADCAST_TRIGGER_ID = "TelemetryBroadcastTrigger";
+        }
+
+        public static class TelemetryBroadcast
+        {
+            public const string BROADCAST_INTERVAL_CONFIG_KEY = "TelemetryBroadcast:BroadcastIntervalMs";
         }
     }
 }
