@@ -7,6 +7,8 @@ using LTS.Services.Quartz.TelemetryBroadcast;
 using LTS.Services.Quartz.UAVTelemetryDataUpdater;
 using LTS.Services.SubscriptionManager;
 using LTS.Services.UAVDataStorage;
+using LTS.Services.WebSocket.Hubs;
+using Microsoft.Extensions.Options;
 using Quartz;
 
 namespace LTS.Extensions
@@ -49,8 +51,15 @@ namespace LTS.Extensions
             return services;
         }
 
-        public static IServiceCollection AddQuartzScheduler(this IServiceCollection services)
+        public static IServiceCollection AddQuartzScheduler(
+            this IServiceCollection services,
+            IConfiguration appConfiguration
+        )
         {
+            services.Configure<SchedulerConfiguration>(
+                appConfiguration.GetSection(LTSConstants.Scheduler.SCHEDULER_CONFIGURATION_SECTION)
+            );
+
             services.AddQuartz(q =>
             {
                 q.UseMicrosoftDependencyInjectionJobFactory();
@@ -104,6 +113,35 @@ namespace LTS.Extensions
         {
             services.AddTransient<IUAVTelemetryDataKafkaConsumer, UAVTelemetryDataKafkaConsumer>();
             return services;
+        }
+    }
+
+    public static class WebApplicationExtensions
+    {
+        public static WebApplication ConfigureHub(this WebApplication app)
+        {
+            app.MapHub<SessionWantedFieldsHub>(LTSConstants.Hub.TELEMETRY_HUB_ENDPOINT);
+            return app;
+        }
+
+        public static async Task<WebApplication> StartSchedulers(this WebApplication app)
+        {
+            IOptions<SchedulerConfiguration> schedulerConfig =
+                app.Services.GetRequiredService<IOptions<SchedulerConfiguration>>();
+
+            IUAVTelemetryDataStorageUpdateSchedular consumeSchedular =
+                app.Services.GetRequiredService<IUAVTelemetryDataStorageUpdateSchedular>();
+            ITelemetryBroadcastSchedular broadcastSchedular =
+                app.Services.GetRequiredService<ITelemetryBroadcastSchedular>();
+
+            await consumeSchedular.StartSchedular(
+                schedulerConfig.Value.ConsumeIntervalSeconds
+            );
+            await broadcastSchedular.StartSchedular(
+                schedulerConfig.Value.BroadcastIntervalSeconds
+            );
+
+            return app;
         }
     }
 }

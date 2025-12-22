@@ -27,9 +27,14 @@
             public const string TELEMETRY_BROADCAST_TRIGGER_ID = "TelemetryBroadcastTrigger";
         }
 
-        public static class TelemetryBroadcast
+        public static class Scheduler
         {
-            public const string BROADCAST_INTERVAL_CONFIG_KEY = "TelemetryBroadcast:BroadcastIntervalMs";
+            public const string SCHEDULER_CONFIGURATION_SECTION = "Scheduler";
+        }
+
+        public static class Hub
+        {
+            public const string TELEMETRY_HUB_ENDPOINT = "/hub/telemetry";
         }
     }
 }
