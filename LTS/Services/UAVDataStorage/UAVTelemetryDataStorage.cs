@@ -44,7 +44,7 @@ namespace LTS.Services.UAVDataStorage
             return _uavTelemetryData.Select(CreateTelemetrySnapshot);
         }
 
-        private static (int TailId, IEnumerable<KeyValuePair<TelemetryFields, double>> TelemetryData) CreateTelemetrySnapshot(
+        private (int TailId, IEnumerable<KeyValuePair<TelemetryFields, double>> TelemetryData) CreateTelemetrySnapshot(
             KeyValuePair<int, Dictionary<TelemetryFields, double>> uavData)
         {
             return (uavData.Key, uavData.Value);

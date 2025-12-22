@@ -12,6 +12,13 @@ namespace LTS.Extensions
 {
     public static class ServiceCollectionExtensions
     {
+        public static IServiceCollection AddWebApi(this IServiceCollection services)
+        {
+            services.AddControllers();
+            services.AddEndpointsApiExplorer();
+            services.AddRouting();
+            return services;
+        }
         public static IServiceCollection AddKafkaServices(
             this IServiceCollection services,
             IConfiguration appConfiguration
@@ -43,29 +50,24 @@ namespace LTS.Extensions
 
         public static IServiceCollection AddQuartzScheduler(this IServiceCollection services)
         {
-            // Add Quartz services
             services.AddQuartz(q =>
             {
-                // Use a scoped job factory to support DI in jobs
                 q.UseMicrosoftDependencyInjectionJobFactory();
 
-                // Register the job
                 q.AddJob<UAVTelemetryDataConsumeJob>(opts =>
                     opts.WithIdentity(
                         LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_ID,
                         LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP
                     )
+                    .StoreDurably()
                 );
             });
 
-            // Add Quartz hosted service
             services.AddQuartzHostedService(options =>
             {
-                // Wait for jobs to complete before shutdown
                 options.WaitForJobsToComplete = true;
             });
 
-            // Register the scheduler service
             services.AddSingleton<
                 IUAVTelemetryDataStorageUpdateSchedular,
                 UAVTelemetryDataStorageUpdateSchedular
