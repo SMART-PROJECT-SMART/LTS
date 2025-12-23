@@ -3,6 +3,5 @@
     public interface IUAVTelemetryDataStorageUpdateSchedular
     {
         Task<bool> StartSchedular(int intervalSeconds);
-        Task<bool> StopSchedular();
     }
 }

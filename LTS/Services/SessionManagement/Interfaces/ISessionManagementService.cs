@@ -1,3 +1,4 @@
+using Core.Common.Enums;
 using LTS.Models;
 
 namespace LTS.Services.SessionManagement.Interfaces

@@ -12,9 +12,7 @@ namespace LTS.Controllers
     {
         private readonly ISessionManagementService _sessionManagementService;
 
-        public SessionsController(
-            ISessionManagementService sessionManagementService,
-        )
+        public SessionsController(ISessionManagementService sessionManagementService)
         {
             _sessionManagementService = sessionManagementService;
         }
