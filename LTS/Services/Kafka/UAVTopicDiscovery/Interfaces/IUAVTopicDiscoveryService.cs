@@ -1,4 +1,4 @@
-namespace LTS.Services.UAVTopicDiscovery.Interfaces
+namespace LTS.Services.Kafka.UAVTopicDiscovery.Interfaces
 {
     public interface IUAVTopicDiscoveryService
     {
