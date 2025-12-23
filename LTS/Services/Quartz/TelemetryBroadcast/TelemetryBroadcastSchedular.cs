@@ -7,15 +7,17 @@ namespace LTS.Services.Quartz.TelemetryBroadcast
 {
     public class TelemetryBroadcastSchedular : ITelemetryBroadcastSchedular
     {
-        private readonly IScheduler _scheduler;
+        private readonly ISchedulerFactory _schedulerFactory;
+        private IScheduler? _scheduler;
 
         public TelemetryBroadcastSchedular(ISchedulerFactory schedulerFactory)
         {
-            _scheduler = schedulerFactory.GetScheduler().Result;
+            _schedulerFactory = schedulerFactory;
         }
 
         public async Task<bool> StartSchedular(int intervalSeconds)
         {
+            _scheduler ??= await _schedulerFactory.GetScheduler();
             ITrigger trigger = CreateTelemetryBroadcastTrigger(intervalSeconds);
             await _scheduler.ScheduleJob(trigger);
             return true;
