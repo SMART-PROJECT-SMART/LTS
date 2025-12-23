@@ -9,23 +9,21 @@ namespace LTS.Services.UAVTopicDiscovery
 {
     public class UAVTopicDiscoveryService : IUAVTopicDiscoveryService, IHostedService
     {
-        private readonly ConcurrentDictionary<int, bool> _cachedUAVIds;
+        private readonly ConcurrentDictionary<int, byte> _cachedUAVIds;
         private readonly KafkaConsumerConfiguration _consumerConfig;
-        private readonly ILogger<UAVTopicDiscoveryService> _logger;
+        private readonly int _prefixLength;
 
-        public UAVTopicDiscoveryService(
-            IOptions<KafkaConsumerConfiguration> consumerConfig,
-            ILogger<UAVTopicDiscoveryService> logger
-        )
+        public UAVTopicDiscoveryService(IOptions<KafkaConsumerConfiguration> consumerConfig)
         {
-            _cachedUAVIds = new ConcurrentDictionary<int, bool>();
+            _cachedUAVIds = new ConcurrentDictionary<int, byte>();
             _consumerConfig = consumerConfig.Value;
-            _logger = logger;
+            _prefixLength = LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX.Length;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public Task StartAsync(CancellationToken cancellationToken)
         {
-            await DiscoverAndCacheUAVTopicsAsync();
+            DiscoverAndCacheUAVTopics();
+            return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -33,7 +31,13 @@ namespace LTS.Services.UAVTopicDiscovery
             return Task.CompletedTask;
         }
 
-        public async Task DiscoverAndCacheUAVTopicsAsync()
+        public Task DiscoverAndCacheUAVTopicsAsync()
+        {
+            DiscoverAndCacheUAVTopics();
+            return Task.CompletedTask;
+        }
+
+        private void DiscoverAndCacheUAVTopics()
         {
             using IAdminClient adminClient = new AdminClientBuilder(
                 new AdminClientConfig { BootstrapServers = _consumerConfig.BootstrapServers }
@@ -43,26 +47,37 @@ namespace LTS.Services.UAVTopicDiscovery
                 TimeSpan.FromSeconds(LTSConstants.Kafka.METADATA_TIMEOUT_SECONDS)
             );
 
-            foreach (TopicMetadata topic in metadata.Topics)
+            foreach (TopicMetadata topicMetadata in metadata.Topics)
             {
-                if (!topic.Topic.StartsWith(LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX))
-                    continue;
-                string tailIdString = topic.Topic.Substring(
-                    LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX.Length
-                );
+                string topicName = topicMetadata.Topic;
 
-                if (int.TryParse(tailIdString, out int tailId))
+                if (topicName.Length <= _prefixLength)
                 {
-                    _cachedUAVIds.TryAdd(tailId, true);
+                    continue;
+                }
+
+                if (
+                    !topicName.StartsWith(
+                        LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX,
+                        StringComparison.Ordinal
+                    )
+                )
+                {
+                    continue;
+                }
+
+                ReadOnlySpan<char> tailIdSpan = topicName.AsSpan(_prefixLength);
+
+                if (int.TryParse(tailIdSpan, out int tailId))
+                {
+                    _cachedUAVIds.TryAdd(tailId, 0);
                 }
             }
-
-            await Task.CompletedTask;
         }
 
         public void AddUAVTopic(int tailId)
         {
-            _cachedUAVIds.TryAdd(tailId, true);
+            _cachedUAVIds.TryAdd(tailId, 0);
         }
 
         public IEnumerable<int> GetAllCachedUAVIds()
