@@ -33,10 +33,10 @@ namespace LTS.Extensions
         {
             services
                 .AddControllers()
-                .AddJsonOptions(options =>
+                .AddNewtonsoftJson(options =>
                 {
-                    options.JsonSerializerOptions.Converters.Add(
-                        new System.Text.Json.Serialization.JsonStringEnumConverter()
+                    options.SerializerSettings.Converters.Add(
+                        new Newtonsoft.Json.Converters.StringEnumConverter()
                     );
                 });
             services.AddEndpointsApiExplorer();

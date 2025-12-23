@@ -27,7 +27,7 @@ namespace LTS.Services.SessionManagement
         public void CreateSession(string sessionId, IEnumerable<UAVFieldSubscription> wantedFields)
         {
             _wantedFieldsManager.CreateSession(sessionId, wantedFields);
-            RegisterNewUAVs(wantedFields.Select(subscription => subscription.TailId).ToHashSet());
+            RegisterNewUAVs(wantedFields.Select(subscription => subscription.TailId));
         }
 
         public void UpdateSession(
@@ -59,7 +59,7 @@ namespace LTS.Services.SessionManagement
                 throw new InvalidOperationException($"Session {sessionId} not found");
             }
 
-            HashSet<int> uavIdsToCheck = sessionWantedFields.Keys.ToHashSet();
+            IEnumerable<int> uavIdsToCheck = sessionWantedFields.Keys;
             _wantedFieldsManager.RemoveSession(sessionId);
             CleanupUnusedUAVs(uavIdsToCheck);
         }
@@ -69,14 +69,14 @@ namespace LTS.Services.SessionManagement
             HashSet<int> oldSet = oldUavIds.ToHashSet();
             HashSet<int> newSet = newUavIds.ToHashSet();
 
-            HashSet<int> removedUavIds = oldSet.Except(newSet).ToHashSet();
-            HashSet<int> addedUavIds = newSet.Except(oldSet).ToHashSet();
+            IEnumerable<int> removedUavIds = oldSet.Except(newSet);
+            IEnumerable<int> addedUavIds = newSet.Except(oldSet);
 
             CleanupUnusedUAVs(removedUavIds);
             RegisterNewUAVs(addedUavIds);
         }
 
-        private void RegisterNewUAVs(HashSet<int> uavIds)
+        private void RegisterNewUAVs(IEnumerable<int> uavIds)
         {
             foreach (int uavId in uavIds)
             {
@@ -85,7 +85,7 @@ namespace LTS.Services.SessionManagement
             }
         }
 
-        private void CleanupUnusedUAVs(HashSet<int> uavIdsToCheck)
+        private void CleanupUnusedUAVs(IEnumerable<int> uavIdsToCheck)
         {
             HashSet<int> stillWantedUAVs = _wantedFieldsManager.GetAllWantedUAVs().ToHashSet();
 
