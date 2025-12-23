@@ -50,7 +50,10 @@ namespace LTS.Services.UAVDataStorage
         {
             return _uavTelemetryData
                 .Select(CreateTelemetrySnapshot)
-                .Select(data => new UAVTelemetryDataDto(data.TailId, data.TelemetryData));
+                .Select(data => new UAVTelemetryDataDto(
+                    data.TailId,
+                    data.TelemetryData.ToDictionary()
+                ));
         }
 
         private (

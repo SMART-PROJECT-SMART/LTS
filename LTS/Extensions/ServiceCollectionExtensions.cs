@@ -1,5 +1,7 @@
 ﻿using LTS.Common;
 using LTS.Configuration;
+using LTS.Services.Kafka.UAVSnapshotConsumer;
+using LTS.Services.Kafka.UAVSnapshotConsumer.Interfaces;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
@@ -15,6 +17,8 @@ using LTS.Services.UAVDataStorage;
 using LTS.Services.UAVDataStorage.Interfaces;
 using LTS.Services.UAVTelemetryFieldsReferenceCounter;
 using LTS.Services.UAVTelemetryFieldsReferenceCounter.Interfaces;
+using LTS.Services.UAVTopicDiscovery;
+using LTS.Services.UAVTopicDiscovery.Interfaces;
 using LTS.Services.WantedFieldsManager;
 using LTS.Services.WantedFieldsManager.Interfaces;
 using LTS.Services.WebSocket.Hubs;
@@ -63,6 +67,16 @@ namespace LTS.Extensions
             AddUAVTelemetryDataKafkaConsumer(services);
             AddUAVTelemetryConsumerManager(services);
 
+            services.AddSingleton<UAVTopicDiscoveryService>();
+            services.AddSingleton<IUAVTopicDiscoveryService>(sp =>
+                sp.GetRequiredService<UAVTopicDiscoveryService>()
+            );
+            services.AddHostedService<UAVTopicDiscoveryService>(sp =>
+                sp.GetRequiredService<UAVTopicDiscoveryService>()
+            );
+
+            services.AddScoped<IUAVSnapshotConsumer, UAVSnapshotConsumer>();
+
             return services;
         }
 
@@ -96,8 +110,6 @@ namespace LTS.Extensions
 
             services.AddQuartz(q =>
             {
-                q.UseMicrosoftDependencyInjectionJobFactory();
-
                 q.AddJob<UAVTelemetryDataConsumeJob>(opts =>
                     opts.WithIdentity(
                             LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_ID,

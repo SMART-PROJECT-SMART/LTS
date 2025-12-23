@@ -54,7 +54,6 @@ namespace LTS.Services.SessionManagement
         {
             Dictionary<int, HashSet<TelemetryFields>>? sessionWantedFields =
                 _wantedFieldsManager.GetSessionWantedFieldsById(sessionId);
-
             if (sessionWantedFields == null)
             {
                 throw new InvalidOperationException($"Session {sessionId} not found");
