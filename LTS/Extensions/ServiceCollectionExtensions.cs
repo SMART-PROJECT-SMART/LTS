@@ -65,6 +65,10 @@ namespace LTS.Extensions
 
         public static IServiceCollection AddWantedUAVFieldsManager(this IServiceCollection services)
         {
+            services.AddSingleton<
+                IUAVTelemetryFieldReferenceCounter,
+                IuavTelemetryFieldReferenceCounter
+            >();
             services.AddSingleton<IWantedUAVFieldsManager, WantedUavFieldsManager>();
             services.AddSingleton<ISessionManagementService, SessionManagementService>();
             return services;

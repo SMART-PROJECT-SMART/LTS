@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Core.Common.Enums;
 using LTS.Models;
+using LTS.Services.WantedFieldsManager.Helpers;
 using LTS.Services.WantedFieldsManager.Interfaces;
 
 namespace LTS.Services.SubscriptionManager
@@ -11,16 +12,13 @@ namespace LTS.Services.SubscriptionManager
             string,
             Dictionary<int, HashSet<TelemetryFields>>
         > _sessionsWantedUAVFields;
-        private readonly ConcurrentDictionary<
-            int,
-            HashSet<TelemetryFields>
-        > _globalWantedFieldsByUavId;
+        private readonly IUAVTelemetryFieldReferenceCounter _fieldReferenceCounter;
 
-        public WantedUavFieldsManager()
+        public WantedUavFieldsManager(IUAVTelemetryFieldReferenceCounter fieldReferenceCounter)
         {
             _sessionsWantedUAVFields =
                 new ConcurrentDictionary<string, Dictionary<int, HashSet<TelemetryFields>>>();
-            _globalWantedFieldsByUavId = new ConcurrentDictionary<int, HashSet<TelemetryFields>>();
+            _fieldReferenceCounter = fieldReferenceCounter;
         }
 
         public void CreateSession(
@@ -29,21 +27,13 @@ namespace LTS.Services.SubscriptionManager
         )
         {
             Dictionary<int, HashSet<TelemetryFields>> sessionFields =
-                new Dictionary<int, HashSet<TelemetryFields>>();
-
-            foreach (UAVFieldSubscription subscription in uavsWantedFields)
-            {
-                HashSet<TelemetryFields> fieldsSet = new HashSet<TelemetryFields>(
-                    subscription.WantedFields
-                );
-                sessionFields[subscription.TailId] = fieldsSet;
-            }
+                SessionFieldsBuilder.BuildFromSubscriptions(uavsWantedFields);
 
             _sessionsWantedUAVFields[sessionId] = sessionFields;
 
-            foreach (int uavId in sessionFields.Keys)
+            foreach (KeyValuePair<int, HashSet<TelemetryFields>> kvp in sessionFields)
             {
-                RecalculateGlobalFieldsForUav(uavId);
+                _fieldReferenceCounter.IncrementFieldReferences(kvp.Key, kvp.Value);
             }
         }
 
@@ -52,41 +42,50 @@ namespace LTS.Services.SubscriptionManager
             IEnumerable<UAVFieldSubscription> newWantedUAVsFields
         )
         {
-            Dictionary<int, HashSet<TelemetryFields>> existingSession = _sessionsWantedUAVFields[
-                sessionId
-            ];
+            Dictionary<int, HashSet<TelemetryFields>>? oldSessionFields =
+                _sessionsWantedUAVFields.GetValueOrDefault(sessionId);
 
-            HashSet<int> affectedUavIds = new HashSet<int>(existingSession.Keys);
-            existingSession.Clear();
-
-            foreach (UAVFieldSubscription subscription in newWantedUAVsFields)
+            if (oldSessionFields == null)
             {
-                existingSession[subscription.TailId] = new HashSet<TelemetryFields>(
-                    subscription.WantedFields
-                );
-                affectedUavIds.Add(subscription.TailId);
+                throw new InvalidOperationException($"Session {sessionId} not found");
             }
 
-            foreach (int uavId in affectedUavIds)
-            {
-                RecalculateGlobalFieldsForUav(uavId);
-            }
+            Dictionary<int, HashSet<TelemetryFields>> newSessionFields =
+                SessionFieldsBuilder.BuildFromSubscriptions(newWantedUAVsFields);
+
+            _sessionsWantedUAVFields[sessionId] = newSessionFields;
+
+            HashSet<int> allAffectedUavIds = SessionFieldsBuilder.GetAllAffectedUavIds(
+                oldSessionFields,
+                newSessionFields
+            );
+
+            UpdateFieldReferences(oldSessionFields, newSessionFields, allAffectedUavIds);
         }
 
         public bool RemoveSession(string sessionId)
         {
-            if (!_sessionsWantedUAVFields.TryRemove(sessionId, out var removedSession))
-                return false;
-            foreach (var uavId in removedSession.Keys)
+            if (
+                !_sessionsWantedUAVFields.TryRemove(
+                    sessionId,
+                    out Dictionary<int, HashSet<TelemetryFields>>? removedSession
+                )
+            )
             {
-                RecalculateGlobalFieldsForUav(uavId);
+                return false;
             }
+
+            foreach (KeyValuePair<int, HashSet<TelemetryFields>> kvp in removedSession)
+            {
+                _fieldReferenceCounter.DecrementFieldReferences(kvp.Key, kvp.Value);
+            }
+
             return true;
         }
 
         public IEnumerable<int> GetAllWantedUAVs()
         {
-            return _globalWantedFieldsByUavId.Keys;
+            return _fieldReferenceCounter.GetAllWantedUAVs();
         }
 
         public Dictionary<int, HashSet<TelemetryFields>>? GetSessionWantedFieldsById(
@@ -103,7 +102,7 @@ namespace LTS.Services.SubscriptionManager
 
         public HashSet<TelemetryFields>? GetGlobalWantedFieldsForUAV(int uavId)
         {
-            return _globalWantedFieldsByUavId.GetValueOrDefault(uavId);
+            return _fieldReferenceCounter.GetGlobalWantedFieldsForUAV(uavId);
         }
 
         public bool DoesSessionExist(string sessionId)
@@ -111,25 +110,26 @@ namespace LTS.Services.SubscriptionManager
             return _sessionsWantedUAVFields.ContainsKey(sessionId);
         }
 
-        private void RecalculateGlobalFieldsForUav(int uavId)
+        private void UpdateFieldReferences(
+            Dictionary<int, HashSet<TelemetryFields>> oldSessionFields,
+            Dictionary<int, HashSet<TelemetryFields>> newSessionFields,
+            HashSet<int> allAffectedUavIds
+        )
         {
-            var globalFields = new HashSet<TelemetryFields>();
-
-            foreach (var sessionWantedUAVs in _sessionsWantedUAVFields.Values)
+            foreach (int uavId in allAffectedUavIds)
             {
-                if (sessionWantedUAVs.TryGetValue(uavId, out var wantedFields))
+                HashSet<TelemetryFields>? oldFields = oldSessionFields.GetValueOrDefault(uavId);
+                HashSet<TelemetryFields>? newFields = newSessionFields.GetValueOrDefault(uavId);
+
+                if (oldFields != null)
                 {
-                    globalFields.UnionWith(wantedFields);
+                    _fieldReferenceCounter.DecrementFieldReferences(uavId, oldFields);
                 }
-            }
 
-            if (globalFields.Count > 0)
-            {
-                _globalWantedFieldsByUavId[uavId] = globalFields;
-            }
-            else
-            {
-                _globalWantedFieldsByUavId.TryRemove(uavId, out _);
+                if (newFields != null)
+                {
+                    _fieldReferenceCounter.IncrementFieldReferences(uavId, newFields);
+                }
             }
         }
     }
