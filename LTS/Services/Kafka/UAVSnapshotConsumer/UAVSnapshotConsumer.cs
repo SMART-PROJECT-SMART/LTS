@@ -35,12 +35,12 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
 
         public IEnumerable<UAVTelemetryDataDto> PeekAllUAVSnapshots()
         {
-            var uavIds = _topicDiscoveryService.GetAllCachedUAVIds();
-            var snapshots = new List<UAVTelemetryDataDto>();
+            IEnumerable<int> uavIds = _topicDiscoveryService.GetAllCachedUAVIds();
+            List<UAVTelemetryDataDto> snapshots = new List<UAVTelemetryDataDto>();
 
-            foreach (var id in uavIds)
+            foreach (int id in uavIds)
             {
-                var snapshot = FetchSnapshot(id);
+                UAVTelemetryDataDto? snapshot = FetchSnapshot(id);
                 if (snapshot != null)
                 {
                     snapshots.Add(snapshot);
@@ -57,18 +57,18 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
 
         private UAVTelemetryDataDto? FetchSnapshot(int uavId)
         {
-            var partition = CreatePartition(uavId);
-            var offset = QueryLatestOffset(partition);
+            TopicPartition partition = CreatePartition(uavId);
+            Offset? offset = QueryLatestOffset(partition);
 
             if (offset == null)
                 return null;
 
-            var payload = ConsumeAtOffset(partition, offset.Value);
+            byte[]? payload = ConsumeAtOffset(partition, offset.Value);
 
             if (payload == null)
                 return null;
 
-            var telemetry = ParseTelemetry(payload);
+            Dictionary<TelemetryFields, double> telemetry = ParseTelemetry(payload);
             return new UAVTelemetryDataDto(uavId, telemetry);
         }
 
@@ -82,7 +82,10 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
 
         private Offset? QueryLatestOffset(TopicPartition partition)
         {
-            var watermarks = _kafkaConsumer.QueryWatermarkOffsets(partition, _consumeTimeout);
+            WatermarkOffsets? watermarks = _kafkaConsumer.QueryWatermarkOffsets(
+                partition,
+                _consumeTimeout
+            );
 
             if (watermarks.High.Value <= 0 || watermarks.High <= watermarks.Low)
             {
@@ -94,9 +97,9 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
 
         private byte[]? ConsumeAtOffset(TopicPartition partition, Offset offset)
         {
-            _kafkaConsumer.Assign(new[] { new TopicPartitionOffset(partition, offset) });
+            _kafkaConsumer.Assign([new TopicPartitionOffset(partition, offset)]);
 
-            var result = _kafkaConsumer.Consume(_consumeTimeout);
+            ConsumeResult<string, byte[]> result = _kafkaConsumer.Consume(_consumeTimeout);
 
             if (result == null || result.IsPartitionEOF)
             {
@@ -119,7 +122,7 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
 
         private static IConsumer<string, byte[]> CreateConsumer(KafkaConsumerConfiguration config)
         {
-            var consumerConfig = new ConsumerConfig
+            ConsumerConfig consumerConfig = new ConsumerConfig
             {
                 BootstrapServers = config.BootstrapServers,
                 GroupId = $"{config.GroupId}{LTSConstants.Kafka.SNAPSHOT_CONSUMER_GROUP_SUFFIX}",
