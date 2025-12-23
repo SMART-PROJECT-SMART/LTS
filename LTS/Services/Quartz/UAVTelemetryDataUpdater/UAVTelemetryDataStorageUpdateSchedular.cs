@@ -21,11 +21,6 @@ namespace LTS.Services.Quartz.UAVTelemetryDataUpdater
             return true;
         }
 
-        public Task<bool> StopSchedular()
-        {
-            throw new NotImplementedException();
-        }
-
         private ITrigger CreateUAVTelemetryDataConsumerTrigger(int intervalSeconds)
         {
             JobKey jobKey = new JobKey(

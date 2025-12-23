@@ -1,4 +1,5 @@
 using Core.Common.Enums;
+using LTS.Models;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
 using LTS.Services.SessionManagement.Interfaces;
 using LTS.Services.UAVDataStorage.Interfaces;
@@ -23,18 +24,15 @@ namespace LTS.Services.SessionManagement
             _storage = storage;
         }
 
-        public void CreateSession(
-            string sessionId,
-            IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> wantedFields
-        )
+        public void CreateSession(string sessionId, IEnumerable<UAVFieldSubscription> wantedFields)
         {
             _wantedFieldsManager.CreateSession(sessionId, wantedFields);
-            RegisterNewUAVs(wantedFields.Select(kvp => kvp.Key).ToHashSet());
+            RegisterNewUAVs(wantedFields.Select(subscription => subscription.TailId).ToHashSet());
         }
 
         public void UpdateSession(
             string sessionId,
-            IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> newWantedFields
+            IEnumerable<UAVFieldSubscription> newWantedFields
         )
         {
             Dictionary<int, HashSet<TelemetryFields>>? oldWantedFields =
@@ -46,7 +44,10 @@ namespace LTS.Services.SessionManagement
             }
 
             _wantedFieldsManager.UpdateWantedUAVFields(sessionId, newWantedFields);
-            UpdateUAVConsumers(oldWantedFields.Keys, newWantedFields.Select(kvp => kvp.Key));
+            UpdateUAVConsumers(
+                oldWantedFields.Keys,
+                newWantedFields.Select(subscription => subscription.TailId)
+            );
         }
 
         public void DeleteSession(string sessionId)

@@ -11,22 +11,19 @@ namespace LTS.Controllers
     public class SessionsController : ControllerBase
     {
         private readonly ISessionManagementService _sessionManagementService;
-        private readonly IWantedUAVFieldsManager _wantedFieldsManager;
 
         public SessionsController(
             ISessionManagementService sessionManagementService,
-            IWantedUAVFieldsManager wantedFieldsManager
         )
         {
             _sessionManagementService = sessionManagementService;
-            _wantedFieldsManager = wantedFieldsManager;
         }
 
         [HttpPost]
         public IActionResult CreateSession([FromBody] CreateSessionDto request)
         {
             _sessionManagementService.CreateSession(request.SessionId, request.WantedFields);
-            return Ok(new { SessionId = request.SessionId });
+            return Ok();
         }
 
         [HttpPut("{sessionId}")]
@@ -44,20 +41,6 @@ namespace LTS.Controllers
         {
             _sessionManagementService.DeleteSession(sessionId);
             return NoContent();
-        }
-
-        [HttpGet("{sessionId}")]
-        public IActionResult GetSession(string sessionId)
-        {
-            Dictionary<int, HashSet<TelemetryFields>>? sessionWantedFields =
-                _wantedFieldsManager.GetSessionWantedFieldsById(sessionId);
-
-            if (sessionWantedFields == null)
-            {
-                return NotFound($"Session {sessionId} not found");
-            }
-
-            return Ok(new { SessionId = sessionId, WantedFields = sessionWantedFields });
         }
     }
 }

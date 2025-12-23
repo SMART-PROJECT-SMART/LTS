@@ -13,6 +13,7 @@ namespace LTS.Services.Quartz.Jobs
     {
         private readonly IUAVTelemetryDataKafkaConsumerManager _uavTelemetryDataKafkaConsumerManager;
         private readonly IUAVTelemetryDataStorage _uavTelemetryDataStorage;
+        private readonly JsonSerializerOptions _jsonSerializerOptions;
 
         public UAVTelemetryDataConsumeJob(
             IUAVTelemetryDataKafkaConsumerManager uavTelemetryDataKafkaConsumerManager,
@@ -21,6 +22,10 @@ namespace LTS.Services.Quartz.Jobs
         {
             _uavTelemetryDataKafkaConsumerManager = uavTelemetryDataKafkaConsumerManager;
             _uavTelemetryDataStorage = uavTelemetryDataStorage;
+            _jsonSerializerOptions = new JsonSerializerOptions()
+            {
+                Converters = { new JsonStringEnumConverter() },
+            };
         }
 
         public Task Execute(IJobExecutionContext context)
@@ -48,14 +53,9 @@ namespace LTS.Services.Quartz.Jobs
         {
             string json = System.Text.Encoding.UTF8.GetString(data);
 
-            var options = new JsonSerializerOptions
-            {
-                Converters = { new JsonStringEnumConverter() },
-            };
-
             var telemetryDict = JsonSerializer.Deserialize<Dictionary<TelemetryFields, double>>(
                 json,
-                options
+                _jsonSerializerOptions
             )!;
             return telemetryDict;
         }

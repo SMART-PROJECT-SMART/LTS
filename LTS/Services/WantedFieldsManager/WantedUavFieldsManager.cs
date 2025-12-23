@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using Core.Common.Enums;
+using LTS.Models;
 using LTS.Services.WantedFieldsManager.Interfaces;
 
 namespace LTS.Services.SubscriptionManager
@@ -24,23 +25,23 @@ namespace LTS.Services.SubscriptionManager
 
         public void CreateSession(
             string sessionId,
-            IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> uavsWantedFields
+            IEnumerable<UAVFieldSubscription> uavsWantedFields
         )
         {
-            var sessionFields = new Dictionary<int, HashSet<TelemetryFields>>();
+            Dictionary<int, HashSet<TelemetryFields>> sessionFields =
+                new Dictionary<int, HashSet<TelemetryFields>>();
 
-            foreach (
-                KeyValuePair<int, IEnumerable<TelemetryFields>> uavWantedFields in uavsWantedFields
-            )
+            foreach (UAVFieldSubscription subscription in uavsWantedFields)
             {
-                int uavId = uavWantedFields.Key;
-                var fieldsSet = new HashSet<TelemetryFields>(uavWantedFields.Value);
-                sessionFields[uavId] = fieldsSet;
+                HashSet<TelemetryFields> fieldsSet = new HashSet<TelemetryFields>(
+                    subscription.WantedFields
+                );
+                sessionFields[subscription.TailId] = fieldsSet;
             }
 
             _sessionsWantedUAVFields[sessionId] = sessionFields;
 
-            foreach (var uavId in sessionFields.Keys)
+            foreach (int uavId in sessionFields.Keys)
             {
                 RecalculateGlobalFieldsForUav(uavId);
             }
@@ -48,27 +49,25 @@ namespace LTS.Services.SubscriptionManager
 
         public void UpdateWantedUAVFields(
             string sessionId,
-            IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> newWantedUAVsFields
+            IEnumerable<UAVFieldSubscription> newWantedUAVsFields
         )
         {
             Dictionary<int, HashSet<TelemetryFields>> existingSession = _sessionsWantedUAVFields[
                 sessionId
             ];
 
-            var oldUavIds = new HashSet<int>(existingSession.Keys);
-            var newUavIds = new HashSet<int>(newWantedUAVsFields.ToDictionary().Keys);
-
-            var affectedUavIds = new HashSet<int>(oldUavIds);
-            affectedUavIds.UnionWith(newUavIds);
-
+            HashSet<int> affectedUavIds = new HashSet<int>(existingSession.Keys);
             existingSession.Clear();
 
-            foreach (var (uavId, wantedFields) in newWantedUAVsFields)
+            foreach (UAVFieldSubscription subscription in newWantedUAVsFields)
             {
-                existingSession[uavId] = new HashSet<TelemetryFields>(wantedFields);
+                existingSession[subscription.TailId] = new HashSet<TelemetryFields>(
+                    subscription.WantedFields
+                );
+                affectedUavIds.Add(subscription.TailId);
             }
 
-            foreach (var uavId in affectedUavIds)
+            foreach (int uavId in affectedUavIds)
             {
                 RecalculateGlobalFieldsForUav(uavId);
             }

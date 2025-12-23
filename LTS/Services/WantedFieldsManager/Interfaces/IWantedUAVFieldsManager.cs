@@ -1,16 +1,14 @@
 ﻿using Core.Common.Enums;
+using LTS.Models;
 
 namespace LTS.Services.WantedFieldsManager.Interfaces
 {
     public interface IWantedUAVFieldsManager
     {
-        void CreateSession(
-            string sessionId,
-            IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> fieldSubscriptions
-        );
+        void CreateSession(string sessionId, IEnumerable<UAVFieldSubscription> fieldSubscriptions);
         void UpdateWantedUAVFields(
             string sessionId,
-            IEnumerable<KeyValuePair<int, IEnumerable<TelemetryFields>>> fieldSubscriptions
+            IEnumerable<UAVFieldSubscription> fieldSubscriptions
         );
         bool RemoveSession(string sessionId);
         IEnumerable<int> GetAllWantedUAVs();

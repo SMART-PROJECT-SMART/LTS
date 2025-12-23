@@ -1,9 +1,9 @@
-﻿using Core.Common.Enums;
+﻿using LTS.Models;
 
 namespace LTS.Dto
 {
     public class UpdateWantedFieldsDto
     {
-        public Dictionary<int, IEnumerable<TelemetryFields>> WantedFields { get; set; }
+        public IEnumerable<UAVFieldSubscription> WantedFields { get; set; }
     }
 }
