@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Core.Common.Enums;
 using LTS.Common;
 using LTS.Configuration;
@@ -8,13 +6,13 @@ using LTS.Dto;
 using LTS.Services.Kafka.UAVSnapshotConsumer.Interfaces;
 using LTS.Services.UAVTopicDiscovery.Interfaces;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace LTS.Services.Kafka.UAVSnapshotConsumer
 {
     public class UAVSnapshotConsumer : IUAVSnapshotConsumer, IDisposable
     {
         private readonly IConsumer<string, byte[]> _kafkaConsumer;
-        private readonly JsonSerializerOptions _jsonOptions;
         private readonly IUAVTopicDiscoveryService _topicDiscoveryService;
         private readonly TimeSpan _consumeTimeout;
 
@@ -24,11 +22,6 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
         )
         {
             _kafkaConsumer = CreateConsumer(configuration.Value);
-            _jsonOptions = new JsonSerializerOptions
-            {
-                Converters = { new JsonStringEnumConverter() },
-                PropertyNameCaseInsensitive = true,
-            };
             _topicDiscoveryService = topicDiscoveryService;
             _consumeTimeout = TimeSpan.FromSeconds(LTSConstants.Kafka.CONSUME_TIMEOUT_SECONDS);
         }
@@ -114,9 +107,10 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
             if (payload.Length == 0)
                 return new Dictionary<TelemetryFields, double>();
 
-            return JsonSerializer.Deserialize<Dictionary<TelemetryFields, double>>(
-                    payload,
-                    _jsonOptions
+            string json = System.Text.Encoding.UTF8.GetString(payload);
+            return JsonConvert.DeserializeObject<Dictionary<TelemetryFields, double>>(
+                    json,
+                    JsonSerializationSettings.TelemetrySettings
                 ) ?? new Dictionary<TelemetryFields, double>();
         }
 

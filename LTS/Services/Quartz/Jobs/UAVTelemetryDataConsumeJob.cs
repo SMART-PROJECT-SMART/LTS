@@ -1,9 +1,9 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Core.Common.Enums;
+using LTS.Common;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
 using LTS.Services.UAVDataStorage.Interfaces;
+using Newtonsoft.Json;
 using Quartz;
 using static System.Int32;
 
@@ -13,7 +13,6 @@ namespace LTS.Services.Quartz.Jobs
     {
         private readonly IUAVTelemetryDataKafkaConsumerManager _uavTelemetryDataKafkaConsumerManager;
         private readonly IUAVTelemetryDataStorage _uavTelemetryDataStorage;
-        private readonly JsonSerializerOptions _jsonSerializerOptions;
 
         public UAVTelemetryDataConsumeJob(
             IUAVTelemetryDataKafkaConsumerManager uavTelemetryDataKafkaConsumerManager,
@@ -22,10 +21,6 @@ namespace LTS.Services.Quartz.Jobs
         {
             _uavTelemetryDataKafkaConsumerManager = uavTelemetryDataKafkaConsumerManager;
             _uavTelemetryDataStorage = uavTelemetryDataStorage;
-            _jsonSerializerOptions = new JsonSerializerOptions()
-            {
-                Converters = { new JsonStringEnumConverter() },
-            };
         }
 
         public Task Execute(IJobExecutionContext context)
@@ -53,9 +48,9 @@ namespace LTS.Services.Quartz.Jobs
         {
             string json = System.Text.Encoding.UTF8.GetString(data);
 
-            Dictionary<TelemetryFields, double> telemetryDict = JsonSerializer.Deserialize<
+            Dictionary<TelemetryFields, double> telemetryDict = JsonConvert.DeserializeObject<
                 Dictionary<TelemetryFields, double>
-            >(json, _jsonSerializerOptions)!;
+            >(json, JsonSerializationSettings.TelemetrySettings)!;
             return telemetryDict;
         }
     }
