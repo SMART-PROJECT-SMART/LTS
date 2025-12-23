@@ -5,6 +5,7 @@ using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
 using LTS.Services.Quartz.Jobs;
 using LTS.Services.Quartz.TelemetryBroadcast;
 using LTS.Services.Quartz.UAVTelemetryDataUpdater;
+using LTS.Services.SessionManagement;
 using LTS.Services.SubscriptionManager;
 using LTS.Services.UAVDataStorage;
 using LTS.Services.WebSocket.Hubs;
@@ -58,6 +59,7 @@ namespace LTS.Extensions
         public static IServiceCollection AddWantedUAVFieldsManager(this IServiceCollection services)
         {
             services.AddSingleton<IWantedUAVFieldsManager, WantedUavFieldsManager>();
+            services.AddSingleton<ISessionManagementService, SessionManagementService>();
             return services;
         }
 

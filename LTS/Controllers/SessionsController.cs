@@ -1,8 +1,7 @@
 ﻿using Core.Common.Enums;
 using LTS.Dto;
-using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
+using LTS.Services.SessionManagement;
 using LTS.Services.SubscriptionManager;
-using LTS.Services.UAVDataStorage;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LTS.Controllers
@@ -11,29 +10,23 @@ namespace LTS.Controllers
     [Route("api/sessions")]
     public class SessionsController : ControllerBase
     {
+        private readonly ISessionManagementService _sessionManagementService;
         private readonly IWantedUAVFieldsManager _wantedFieldsManager;
-        private readonly IUAVTelemetryDataKafkaConsumerManager _consumerManager;
-        private readonly IUAVTelemetryDataStorage _storage;
 
         public SessionsController(
-            IWantedUAVFieldsManager wantedFieldsManager,
-            IUAVTelemetryDataKafkaConsumerManager consumerManager,
-            IUAVTelemetryDataStorage storage
+            ISessionManagementService sessionManagementService,
+            IWantedUAVFieldsManager wantedFieldsManager
         )
         {
+            _sessionManagementService = sessionManagementService;
             _wantedFieldsManager = wantedFieldsManager;
-            _consumerManager = consumerManager;
-            _storage = storage;
         }
 
         [HttpPost]
         public IActionResult CreateSession([FromBody] CreateSessionDto request)
         {
-            _wantedFieldsManager.CreateSession(request.SessionId, request.WantedFields);
-
-            RegisterWantedFields(request);
-
-            return Ok();
+            _sessionManagementService.CreateSession(request.SessionId, request.WantedFields);
+            return Ok(new { SessionId = request.SessionId });
         }
 
         [HttpPut("{sessionId}")]
@@ -42,26 +35,21 @@ namespace LTS.Controllers
             [FromBody] UpdateWantedFieldsDto request
         )
         {
-            if (_wantedFieldsManager.GetSessionWantedFieldsById(sessionId) != null)
+            try
             {
-                return NotFound($"Session {sessionId} not found");
+                _sessionManagementService.UpdateSession(sessionId, request.WantedFields);
+                return Ok();
             }
-
-            _wantedFieldsManager.UpdateWantedUAVFields(sessionId, request.WantedFields);
-
-            return Ok();
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         [HttpDelete("{sessionId}")]
         public IActionResult DeleteSession(string sessionId)
         {
-            var removed = _wantedFieldsManager.RemoveSession(sessionId);
-
-            if (!removed)
-            {
-                return NotFound($"Session {sessionId} not found");
-            }
-
+            _sessionManagementService.DeleteSession(sessionId);
             return NoContent();
         }
 
@@ -77,15 +65,6 @@ namespace LTS.Controllers
             }
 
             return Ok(new { SessionId = sessionId, WantedFields = sessionWantedFields });
-        }
-
-        private void RegisterWantedFields(CreateSessionDto dto)
-        {
-            foreach (int tailId in dto.WantedFields.Keys)
-            {
-                _storage.AddNewUAV(tailId);
-                _consumerManager.AddConsumer(tailId.ToString());
-            }
         }
     }
 }
