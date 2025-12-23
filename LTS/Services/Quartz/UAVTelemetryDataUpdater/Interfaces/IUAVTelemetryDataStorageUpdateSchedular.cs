@@ -1,4 +1,4 @@
-﻿namespace LTS.Services.Quartz.UAVTelemetryDataUpdater
+﻿namespace LTS.Services.Quartz.UAVTelemetryDataUpdater.Interfaces
 {
     public interface IUAVTelemetryDataStorageUpdateSchedular
     {

@@ -1,4 +1,4 @@
-namespace LTS.Models
+namespace LTS.Configuration
 {
     public class SchedulerConfiguration
     {

@@ -1,8 +1,8 @@
 using Core.Common.Enums;
 using LTS.Common;
 using LTS.Dto;
-using LTS.Services.SubscriptionManager;
-using LTS.Services.UAVDataStorage;
+using LTS.Services.UAVDataStorage.Interfaces;
+using LTS.Services.WantedFieldsManager.Interfaces;
 using LTS.Services.WebSocket.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Quartz;
@@ -32,42 +32,82 @@ namespace LTS.Services.Quartz.Jobs
 
             foreach (string sessionId in sessionIds)
             {
-                Dictionary<int, HashSet<TelemetryFields>>? sessionWantedFields =
-                    _wantedUavFieldsManager.GetSessionWantedFieldsById(sessionId);
-
-                if (sessionWantedFields == null)
-                {
-                    continue;
-                }
-
-                List<UAVTelemetryFieldsDto> uavDataList = sessionWantedFields
-                    .Select(uavSubscription =>
-                    {
-                        IEnumerable<KeyValuePair<TelemetryFields, double>>? telemetryData =
-                            _uavTelemetryDataStorage.GetUAVTelemetryData(uavSubscription.Key);
-
-                        Dictionary<TelemetryFields, double> filteredFields =
-                            telemetryData?
-                                .Where(kvp => uavSubscription.Value.Contains(kvp.Key))
-                                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
-                            ?? new Dictionary<TelemetryFields, double>();
-
-                        return new UAVTelemetryFieldsDto(uavSubscription.Key, filteredFields);
-                    })
-                    .Where(dto => dto.Fields.Any())
-                    .ToList();
-
-                if (uavDataList.Any())
-                {
-                    TelemetryBroadcastDto broadcastDto = new TelemetryBroadcastDto(uavDataList);
-                    await _hubContext
-                        .Clients.Group(sessionId)
-                        .SendAsync(
-                            LTSConstants.WebSocket.RECIVE_TELEMETRY_DATA_METHOD,
-                            broadcastDto
-                        );
-                }
+                await ProcessSessionBroadcast(sessionId);
             }
+        }
+
+        private async Task ProcessSessionBroadcast(string sessionId)
+        {
+            Dictionary<int, HashSet<TelemetryFields>>? sessionWantedFields =
+                _wantedUavFieldsManager.GetSessionWantedFieldsById(sessionId);
+
+            if (sessionWantedFields == null)
+            {
+                return;
+            }
+
+            List<UAVTelemetryFieldsDto> uavDataList = BuildUAVTelemetryDataList(
+                sessionWantedFields
+            );
+
+            if (uavDataList.Any())
+            {
+                TelemetryBroadcastDto broadcastDto = new TelemetryBroadcastDto(uavDataList);
+                await SendBroadcastToSession(sessionId, broadcastDto);
+            }
+        }
+
+        private List<UAVTelemetryFieldsDto> BuildUAVTelemetryDataList(
+            Dictionary<int, HashSet<TelemetryFields>> sessionWantedFields
+        )
+        {
+            return sessionWantedFields
+                .Select(uavSubscription =>
+                    BuildUAVTelemetryDto(uavSubscription.Key, uavSubscription.Value)
+                )
+                .Where(dto => dto.Fields.Any())
+                .ToList();
+        }
+
+        private UAVTelemetryFieldsDto BuildUAVTelemetryDto(
+            int tailId,
+            HashSet<TelemetryFields> wantedFields
+        )
+        {
+            Dictionary<TelemetryFields, double> filteredFields = GetFilteredTelemetryData(
+                tailId,
+                wantedFields
+            );
+
+            return new UAVTelemetryFieldsDto(tailId, filteredFields);
+        }
+
+        private Dictionary<TelemetryFields, double> GetFilteredTelemetryData(
+            int tailId,
+            HashSet<TelemetryFields> wantedFields
+        )
+        {
+            IEnumerable<KeyValuePair<TelemetryFields, double>>? telemetryData =
+                _uavTelemetryDataStorage.GetUAVTelemetryData(tailId);
+
+            if (telemetryData == null)
+            {
+                return new Dictionary<TelemetryFields, double>();
+            }
+
+            return telemetryData
+                .Where(kvp => wantedFields.Contains(kvp.Key))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+
+        private async Task SendBroadcastToSession(
+            string sessionId,
+            TelemetryBroadcastDto broadcastDto
+        )
+        {
+            await _hubContext
+                .Clients.Group(sessionId)
+                .SendAsync(LTSConstants.WebSocket.RECIVE_TELEMETRY_DATA_METHOD, broadcastDto);
         }
     }
 }

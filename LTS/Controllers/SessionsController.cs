@@ -1,6 +1,6 @@
 ﻿using Core.Common.Enums;
 using LTS.Dto;
-using LTS.Services.SessionManagement;
+using LTS.Services.SessionManagement.Interfaces;
 using LTS.Services.SubscriptionManager;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,15 +35,8 @@ namespace LTS.Controllers
             [FromBody] UpdateWantedFieldsDto request
         )
         {
-            try
-            {
-                _sessionManagementService.UpdateSession(sessionId, request.WantedFields);
-                return Ok();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return NotFound(ex.Message);
-            }
+            _sessionManagementService.UpdateSession(sessionId, request.WantedFields);
+            return Ok();
         }
 
         [HttpDelete("{sessionId}")]

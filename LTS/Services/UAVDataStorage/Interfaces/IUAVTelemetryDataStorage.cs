@@ -1,7 +1,7 @@
 ﻿using Core.Common.Enums;
 using LTS.Dto;
 
-namespace LTS.Services.UAVDataStorage
+namespace LTS.Services.UAVDataStorage.Interfaces
 {
     public interface IUAVTelemetryDataStorage
     {

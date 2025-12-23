@@ -1,6 +1,7 @@
 ﻿using Confluent.Kafka;
 using LTS.Common;
-using LTS.Models;
+using LTS.Configuration;
+using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
 using LTS.Services.SubscriptionManager;
 using Microsoft.Extensions.Options;
 

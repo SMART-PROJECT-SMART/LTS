@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using Core.Common.Enums;
+using LTS.Services.WantedFieldsManager.Interfaces;
 
 namespace LTS.Services.SubscriptionManager
 {

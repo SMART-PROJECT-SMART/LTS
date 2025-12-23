@@ -1,5 +1,6 @@
 using LTS.Common;
 using LTS.Services.Quartz.Jobs;
+using LTS.Services.Quartz.TelemetryBroadcast.Interfaces;
 using Quartz;
 
 namespace LTS.Services.Quartz.TelemetryBroadcast

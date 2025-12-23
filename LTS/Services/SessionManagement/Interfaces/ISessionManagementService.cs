@@ -1,6 +1,6 @@
 using Core.Common.Enums;
 
-namespace LTS.Services.SessionManagement
+namespace LTS.Services.SessionManagement.Interfaces
 {
     public interface ISessionManagementService
     {

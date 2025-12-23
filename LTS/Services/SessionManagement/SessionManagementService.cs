@@ -1,7 +1,8 @@
 using Core.Common.Enums;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
-using LTS.Services.SubscriptionManager;
-using LTS.Services.UAVDataStorage;
+using LTS.Services.SessionManagement.Interfaces;
+using LTS.Services.UAVDataStorage.Interfaces;
+using LTS.Services.WantedFieldsManager.Interfaces;
 
 namespace LTS.Services.SessionManagement
 {

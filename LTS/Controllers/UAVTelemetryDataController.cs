@@ -1,6 +1,6 @@
 ﻿using Core.Common.Enums;
 using LTS.Dto;
-using LTS.Services.UAVDataStorage;
+using LTS.Services.UAVDataStorage.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LTS.Controllers

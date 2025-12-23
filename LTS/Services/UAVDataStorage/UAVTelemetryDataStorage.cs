@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Core.Common.Enums;
 using LTS.Dto;
+using LTS.Services.UAVDataStorage.Interfaces;
 
 namespace LTS.Services.UAVDataStorage
 {

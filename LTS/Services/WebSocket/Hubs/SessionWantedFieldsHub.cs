@@ -42,18 +42,5 @@ namespace LTS.Services.WebSocket.Hubs
             }
             await base.OnDisconnectedAsync(exception);
         }
-
-        public async Task SendTelemetryData(
-            string sessionId,
-            IEnumerable<KeyValuePair<TelemetryFields, double>> telemetryData
-        )
-        {
-            if (_sessionsClient.TryGetValue(sessionId, out string? connectionId))
-            {
-                await Clients
-                    .Client(connectionId)
-                    .SendAsync(LTSConstants.WebSocket.RECIVE_TELEMETRY_DATA_METHOD, telemetryData);
-            }
-        }
     }
 }

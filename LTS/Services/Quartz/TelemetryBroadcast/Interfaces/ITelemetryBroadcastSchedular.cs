@@ -1,4 +1,4 @@
-namespace LTS.Services.Quartz.TelemetryBroadcast
+namespace LTS.Services.Quartz.TelemetryBroadcast.Interfaces
 {
     public interface ITelemetryBroadcastSchedular
     {

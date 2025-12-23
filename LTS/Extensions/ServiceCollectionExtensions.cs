@@ -1,13 +1,18 @@
 ﻿using LTS.Common;
-using LTS.Models;
+using LTS.Configuration;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer;
+using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
 using LTS.Services.Quartz.Jobs;
 using LTS.Services.Quartz.TelemetryBroadcast;
+using LTS.Services.Quartz.TelemetryBroadcast.Interfaces;
 using LTS.Services.Quartz.UAVTelemetryDataUpdater;
+using LTS.Services.Quartz.UAVTelemetryDataUpdater.Interfaces;
 using LTS.Services.SessionManagement;
+using LTS.Services.SessionManagement.Interfaces;
 using LTS.Services.SubscriptionManager;
 using LTS.Services.UAVDataStorage;
+using LTS.Services.UAVDataStorage.Interfaces;
 using LTS.Services.WebSocket.Hubs;
 using Microsoft.Extensions.Options;
 using Quartz;
@@ -41,6 +46,7 @@ namespace LTS.Extensions
             });
             return services;
         }
+
         public static IServiceCollection AddKafkaServices(
             this IServiceCollection services,
             IConfiguration appConfiguration
@@ -86,18 +92,18 @@ namespace LTS.Extensions
 
                 q.AddJob<UAVTelemetryDataConsumeJob>(opts =>
                     opts.WithIdentity(
-                        LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_ID,
-                        LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP
-                    )
-                    .StoreDurably()
+                            LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_ID,
+                            LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP
+                        )
+                        .StoreDurably()
                 );
 
                 q.AddJob<TelemetryBroadcastJob>(opts =>
                     opts.WithIdentity(
-                        LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_ID,
-                        LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_GROUP
-                    )
-                    .StoreDurably()
+                            LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_ID,
+                            LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_GROUP
+                        )
+                        .StoreDurably()
                 );
             });
 
@@ -146,20 +152,17 @@ namespace LTS.Extensions
 
         public static async Task<WebApplication> StartSchedulers(this WebApplication app)
         {
-            IOptions<SchedulerConfiguration> schedulerConfig =
-                app.Services.GetRequiredService<IOptions<SchedulerConfiguration>>();
+            IOptions<SchedulerConfiguration> schedulerConfig = app.Services.GetRequiredService<
+                IOptions<SchedulerConfiguration>
+            >();
 
             IUAVTelemetryDataStorageUpdateSchedular consumeSchedular =
                 app.Services.GetRequiredService<IUAVTelemetryDataStorageUpdateSchedular>();
             ITelemetryBroadcastSchedular broadcastSchedular =
                 app.Services.GetRequiredService<ITelemetryBroadcastSchedular>();
 
-            await consumeSchedular.StartSchedular(
-                schedulerConfig.Value.ConsumeIntervalSeconds
-            );
-            await broadcastSchedular.StartSchedular(
-                schedulerConfig.Value.BroadcastIntervalSeconds
-            );
+            await consumeSchedular.StartSchedular(schedulerConfig.Value.ConsumeIntervalSeconds);
+            await broadcastSchedular.StartSchedular(schedulerConfig.Value.BroadcastIntervalSeconds);
 
             return app;
         }
