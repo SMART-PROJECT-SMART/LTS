@@ -3,6 +3,7 @@ using LTS.Configuration;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
+using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
 using LTS.Services.Quartz.Jobs;
 using LTS.Services.Quartz.TelemetryBroadcast;
 using LTS.Services.Quartz.TelemetryBroadcast.Interfaces;
@@ -153,7 +154,7 @@ namespace LTS.Extensions
     {
         public static WebApplication ConfigureHub(this WebApplication app)
         {
-            app.MapHub<SessionWantedFieldsHub>(LTSConstants.Hub.TELEMETRY_HUB_ENDPOINT);
+            app.MapHub<TelemetryBroadcastHub>(LTSConstants.Hub.TELEMETRY_HUB_ENDPOINT);
             return app;
         }
 

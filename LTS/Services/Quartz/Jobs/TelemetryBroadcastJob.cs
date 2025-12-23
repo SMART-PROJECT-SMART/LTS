@@ -13,12 +13,12 @@ namespace LTS.Services.Quartz.Jobs
     {
         private readonly IUAVTelemetryDataStorage _uavTelemetryDataStorage;
         private readonly IWantedUAVFieldsManager _wantedUavFieldsManager;
-        private readonly IHubContext<SessionWantedFieldsHub> _hubContext;
+        private readonly IHubContext<TelemetryBroadcastHub> _hubContext;
 
         public TelemetryBroadcastJob(
             IUAVTelemetryDataStorage uavTelemetryDataStorage,
             IWantedUAVFieldsManager wantedUavFieldsManager,
-            IHubContext<SessionWantedFieldsHub> hubContext
+            IHubContext<TelemetryBroadcastHub> hubContext
         )
         {
             _uavTelemetryDataStorage = uavTelemetryDataStorage;

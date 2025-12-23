@@ -1,6 +1,6 @@
 ﻿using Confluent.Kafka;
 
-namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
+namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces
 {
     public interface IUAVTelemetryDataKafkaConsumerManager
     {

@@ -1,16 +1,10 @@
-﻿using System.Collections.Concurrent;
-using Core.Common.Enums;
-using LTS.Common;
+﻿using LTS.Common;
 using Microsoft.AspNetCore.SignalR;
 
 namespace LTS.Services.WebSocket.Hubs
 {
-    public class SessionWantedFieldsHub : Hub
+    public class TelemetryBroadcastHub : Hub
     {
-        private static readonly ConcurrentDictionary<string, string> _sessionsClient = new();
-
-        public SessionWantedFieldsHub() { }
-
         public override async Task OnConnectedAsync()
         {
             HttpContext? httpContext = Context.GetHttpContext();
@@ -20,7 +14,7 @@ namespace LTS.Services.WebSocket.Hubs
 
             if (!string.IsNullOrEmpty(sessionId))
             {
-                _sessionsClient[sessionId] = Context.ConnectionId;
+                Context.Items[LTSConstants.WebSocket.SESSION_ID_KEY] = sessionId;
                 await Groups.AddToGroupAsync(Context.ConnectionId, sessionId);
                 await base.OnConnectedAsync();
                 return;
@@ -31,14 +25,20 @@ namespace LTS.Services.WebSocket.Hubs
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            string? sessionToRemove = _sessionsClient
-                .FirstOrDefault(x => x.Value == Context.ConnectionId)
-                .Key;
-            if (sessionToRemove != null)
+            if (
+                Context.Items.TryGetValue(
+                    LTSConstants.WebSocket.SESSION_ID_KEY,
+                    out object? sessionIdObj
+                )
+            )
             {
-                _sessionsClient.TryRemove(sessionToRemove, out string _);
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionToRemove);
+                string? sessionId = sessionIdObj as string;
+                if (sessionId != null)
+                {
+                    await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionId);
+                }
             }
+
             await base.OnDisconnectedAsync(exception);
         }
     }

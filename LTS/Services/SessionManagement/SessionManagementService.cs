@@ -1,6 +1,6 @@
 using Core.Common.Enums;
 using LTS.Models;
-using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
+using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
 using LTS.Services.SessionManagement.Interfaces;
 using LTS.Services.UAVDataStorage.Interfaces;
 using LTS.Services.WantedFieldsManager.Interfaces;

@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
+using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager

@@ -53,10 +53,9 @@ namespace LTS.Services.Quartz.Jobs
         {
             string json = System.Text.Encoding.UTF8.GetString(data);
 
-            var telemetryDict = JsonSerializer.Deserialize<Dictionary<TelemetryFields, double>>(
-                json,
-                _jsonSerializerOptions
-            )!;
+            Dictionary<TelemetryFields, double> telemetryDict = JsonSerializer.Deserialize<
+                Dictionary<TelemetryFields, double>
+            >(json, _jsonSerializerOptions)!;
             return telemetryDict;
         }
     }

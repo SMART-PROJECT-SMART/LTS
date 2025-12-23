@@ -11,6 +11,7 @@
         public static class WebSocket
         {
             public const string SESSION_ID_FIELD = "sessionId";
+            public const string SESSION_ID_KEY = "SessionId";
             public const string WANTED_UAVS_FIELDS_FIELD = "wantedUAVsFields";
             public const string RECIVE_TELEMETRY_DATA_METHOD = "ReceiveTelemetryData";
         }
