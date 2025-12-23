@@ -1,7 +1,7 @@
 ﻿using Core.Common.Enums;
 using LTS.Dto;
 using LTS.Services.SessionManagement.Interfaces;
-using LTS.Services.SubscriptionManager;
+using LTS.Services.WantedFieldsManager.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LTS.Controllers

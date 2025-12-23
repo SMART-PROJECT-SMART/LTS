@@ -1,6 +1,6 @@
 ﻿using Core.Common.Enums;
 
-namespace LTS.Services.SubscriptionManager
+namespace LTS.Services.WantedFieldsManager.Interfaces
 {
     public interface IWantedUAVFieldsManager
     {

@@ -13,6 +13,7 @@ using LTS.Services.SessionManagement.Interfaces;
 using LTS.Services.SubscriptionManager;
 using LTS.Services.UAVDataStorage;
 using LTS.Services.UAVDataStorage.Interfaces;
+using LTS.Services.WantedFieldsManager.Interfaces;
 using LTS.Services.WebSocket.Hubs;
 using Microsoft.Extensions.Options;
 using Quartz;
