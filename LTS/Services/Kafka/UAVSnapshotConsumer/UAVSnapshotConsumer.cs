@@ -13,113 +13,90 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
 {
     public class UAVSnapshotConsumer : IUAVSnapshotConsumer, IDisposable
     {
-        private readonly IConsumer<string, byte[]> _consumer;
-        private readonly JsonSerializerOptions _jsonSerializerOptions;
+        private readonly IConsumer<string, byte[]> _kafkaConsumer;
+        private readonly JsonSerializerOptions _jsonOptions;
         private readonly IUAVTopicDiscoveryService _topicDiscoveryService;
+        private readonly TimeSpan _consumeTimeout;
 
         public UAVSnapshotConsumer(
-            IOptions<KafkaConsumerConfiguration> kafkaConsumerConfiguration,
+            IOptions<KafkaConsumerConfiguration> configuration,
             IUAVTopicDiscoveryService topicDiscoveryService
         )
         {
-            _consumer = BuildConsumer(kafkaConsumerConfiguration.Value);
-            _jsonSerializerOptions = new JsonSerializerOptions
+            _kafkaConsumer = CreateConsumer(configuration.Value);
+            _jsonOptions = new JsonSerializerOptions
             {
                 Converters = { new JsonStringEnumConverter() },
+                PropertyNameCaseInsensitive = true,
             };
             _topicDiscoveryService = topicDiscoveryService;
+            _consumeTimeout = TimeSpan.FromSeconds(LTSConstants.Kafka.CONSUME_TIMEOUT_SECONDS);
         }
 
         public IEnumerable<UAVTelemetryDataDto> PeekAllUAVSnapshots()
         {
-            List<UAVTelemetryDataDto> results = new List<UAVTelemetryDataDto>();
-            IEnumerable<int> discoveredUAVIds = _topicDiscoveryService.GetAllCachedUAVIds();
+            var uavIds = _topicDiscoveryService.GetAllCachedUAVIds();
+            var snapshots = new List<UAVTelemetryDataDto>();
 
-            foreach (int tailId in discoveredUAVIds)
+            foreach (var id in uavIds)
             {
-                UAVTelemetryDataDto? snapshot = PeekLatestSnapshotForUAV(tailId);
+                var snapshot = FetchSnapshot(id);
                 if (snapshot != null)
                 {
-                    results.Add(snapshot);
+                    snapshots.Add(snapshot);
                 }
             }
 
-            return results;
+            return snapshots;
         }
 
         public void Dispose()
         {
-            _consumer.Close();
-            _consumer.Dispose();
+            _kafkaConsumer.Dispose();
         }
 
-        private UAVTelemetryDataDto? PeekLatestSnapshotForUAV(int tailId)
+        private UAVTelemetryDataDto? FetchSnapshot(int uavId)
         {
-            TopicPartition topicPartition = BuildTopicPartition(tailId);
+            var partition = CreatePartition(uavId);
+            var offset = QueryLatestOffset(partition);
 
-            Offset? latestOffset = GetLatestOffset(topicPartition);
-            if (latestOffset == null)
-            {
+            if (offset == null)
                 return null;
-            }
 
-            byte[]? messageData = PeekMessageAtOffset(topicPartition, latestOffset.Value);
-            if (messageData == null)
-            {
+            var payload = ConsumeAtOffset(partition, offset.Value);
+
+            if (payload == null)
                 return null;
-            }
 
-            IEnumerable<KeyValuePair<TelemetryFields, double>> telemetryData =
-                DeserializeTelemetryData(messageData);
-
-            return new UAVTelemetryDataDto(tailId, telemetryData.ToDictionary());
+            var telemetry = ParseTelemetry(payload);
+            return new UAVTelemetryDataDto(uavId, telemetry);
         }
 
-        private TopicPartition BuildTopicPartition(int tailId)
+        private TopicPartition CreatePartition(int uavId)
         {
-            string topicName = $"{LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX}{tailId}";
             return new TopicPartition(
-                topicName,
+                $"{LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX}{uavId}",
                 new Partition(LTSConstants.Kafka.DEFAULT_PARTITION)
             );
         }
 
-        private Offset? GetLatestOffset(TopicPartition topicPartition)
+        private Offset? QueryLatestOffset(TopicPartition partition)
         {
-            WatermarkOffsets watermark = _consumer.QueryWatermarkOffsets(
-                topicPartition,
-                TimeSpan.FromSeconds(LTSConstants.Kafka.CONSUME_TIMEOUT_SECONDS)
-            );
+            var watermarks = _kafkaConsumer.QueryWatermarkOffsets(partition, _consumeTimeout);
 
-            if (watermark.High <= watermark.Low)
+            if (watermarks.High.Value <= 0 || watermarks.High <= watermarks.Low)
             {
                 return null;
             }
 
-            if (watermark.High.Value <= 0)
-            {
-                return null;
-            }
-
-            Offset latest = watermark.High - 1;
-
-            if (latest < watermark.Low)
-            {
-                return null;
-            }
-
-            return latest;
+            return watermarks.High - 1;
         }
 
-        private byte[]? PeekMessageAtOffset(TopicPartition topicPartition, Offset offset)
+        private byte[]? ConsumeAtOffset(TopicPartition partition, Offset offset)
         {
-            _consumer.Assign(new[] { new TopicPartitionOffset(topicPartition, offset) });
+            _kafkaConsumer.Assign(new[] { new TopicPartitionOffset(partition, offset) });
 
-            _consumer.Consume(TimeSpan.Zero);
-
-            ConsumeResult<string, byte[]>? result = _consumer.Consume(
-                TimeSpan.FromSeconds(LTSConstants.Kafka.CONSUME_TIMEOUT_SECONDS)
-            );
+            var result = _kafkaConsumer.Consume(_consumeTimeout);
 
             if (result == null || result.IsPartitionEOF)
             {
@@ -129,22 +106,20 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
             return result.Message.Value;
         }
 
-        private IEnumerable<KeyValuePair<TelemetryFields, double>> DeserializeTelemetryData(
-            byte[] data
-        )
+        private Dictionary<TelemetryFields, double> ParseTelemetry(byte[] payload)
         {
-            string json = System.Text.Encoding.UTF8.GetString(data);
+            if (payload.Length == 0)
+                return new Dictionary<TelemetryFields, double>();
 
-            Dictionary<TelemetryFields, double>? telemetryDict = JsonSerializer.Deserialize<
-                Dictionary<TelemetryFields, double>
-            >(json, _jsonSerializerOptions);
-
-            return telemetryDict ?? new Dictionary<TelemetryFields, double>();
+            return JsonSerializer.Deserialize<Dictionary<TelemetryFields, double>>(
+                    payload,
+                    _jsonOptions
+                ) ?? new Dictionary<TelemetryFields, double>();
         }
 
-        private static IConsumer<string, byte[]> BuildConsumer(KafkaConsumerConfiguration config)
+        private static IConsumer<string, byte[]> CreateConsumer(KafkaConsumerConfiguration config)
         {
-            ConsumerConfig consumerConfig = new ConsumerConfig
+            var consumerConfig = new ConsumerConfig
             {
                 BootstrapServers = config.BootstrapServers,
                 GroupId = $"{config.GroupId}{LTSConstants.Kafka.SNAPSHOT_CONSUMER_GROUP_SUFFIX}",
