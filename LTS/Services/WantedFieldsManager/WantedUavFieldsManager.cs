@@ -1,10 +1,11 @@
 ﻿using System.Collections.Concurrent;
 using Core.Common.Enums;
 using LTS.Models;
+using LTS.Services.UAVTelemetryFieldsReferenceCounter.Interfaces;
 using LTS.Services.WantedFieldsManager.Helpers;
 using LTS.Services.WantedFieldsManager.Interfaces;
 
-namespace LTS.Services.SubscriptionManager
+namespace LTS.Services.WantedFieldsManager
 {
     public class WantedUavFieldsManager : IWantedUAVFieldsManager
     {

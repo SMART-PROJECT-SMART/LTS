@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using Core.Common.Enums;
 using LTS.Common;
-using LTS.Services.SubscriptionManager;
 using Microsoft.AspNetCore.SignalR;
 
 namespace LTS.Services.WebSocket.Hubs

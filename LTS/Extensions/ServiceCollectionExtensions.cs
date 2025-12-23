@@ -10,9 +10,11 @@ using LTS.Services.Quartz.UAVTelemetryDataUpdater;
 using LTS.Services.Quartz.UAVTelemetryDataUpdater.Interfaces;
 using LTS.Services.SessionManagement;
 using LTS.Services.SessionManagement.Interfaces;
-using LTS.Services.SubscriptionManager;
 using LTS.Services.UAVDataStorage;
 using LTS.Services.UAVDataStorage.Interfaces;
+using LTS.Services.UAVTelemetryFieldsReferenceCounter;
+using LTS.Services.UAVTelemetryFieldsReferenceCounter.Interfaces;
+using LTS.Services.WantedFieldsManager;
 using LTS.Services.WantedFieldsManager.Interfaces;
 using LTS.Services.WebSocket.Hubs;
 using Microsoft.Extensions.Options;
@@ -67,7 +69,7 @@ namespace LTS.Extensions
         {
             services.AddSingleton<
                 IUAVTelemetryFieldReferenceCounter,
-                IuavTelemetryFieldReferenceCounter
+                UAVTelemetryFieldReferenceCounter
             >();
             services.AddSingleton<IWantedUAVFieldsManager, WantedUavFieldsManager>();
             services.AddSingleton<ISessionManagementService, SessionManagementService>();

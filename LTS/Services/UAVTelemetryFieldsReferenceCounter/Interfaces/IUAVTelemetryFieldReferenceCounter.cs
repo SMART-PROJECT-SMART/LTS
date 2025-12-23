@@ -1,6 +1,6 @@
 using Core.Common.Enums;
 
-namespace LTS.Services.WantedFieldsManager.Interfaces
+namespace LTS.Services.UAVTelemetryFieldsReferenceCounter.Interfaces
 {
     public interface IUAVTelemetryFieldReferenceCounter
     {

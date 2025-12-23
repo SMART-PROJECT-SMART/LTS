@@ -2,7 +2,7 @@
 using System.Text.Json.Serialization;
 using Confluent.Kafka;
 using Core.Common.Enums;
-using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
+using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
 using LTS.Services.UAVDataStorage.Interfaces;
 using Quartz;
 using static System.Int32;
