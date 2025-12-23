@@ -31,13 +31,9 @@ namespace LTS.Controllers
         {
             _wantedFieldsManager.CreateSession(request.SessionId, request.WantedFields);
 
-            foreach (int tailId in request.WantedFields.Keys)
-            {
-                _storage.AddNewUAV(tailId);
-                _consumerManager.AddConsumer(tailId.ToString());
-            }
+            RegisterWantedFields(request);
 
-            return Ok(new { SessionId = request.SessionId });
+            return Ok();
         }
 
         [HttpPut("{sessionId}")]
@@ -81,6 +77,15 @@ namespace LTS.Controllers
             }
 
             return Ok(new { SessionId = sessionId, WantedFields = sessionWantedFields });
+        }
+
+        private void RegisterWantedFields(CreateSessionDto dto)
+        {
+            foreach (int tailId in dto.WantedFields.Keys)
+            {
+                _storage.AddNewUAV(tailId);
+                _consumerManager.AddConsumer(tailId.ToString());
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using Core.Common.Enums;
+using LTS.Dto;
 
 namespace LTS.Services.UAVDataStorage
 {
@@ -36,18 +37,25 @@ namespace LTS.Services.UAVDataStorage
 
         public IEnumerable<KeyValuePair<TelemetryFields, double>>? GetUAVTelemetryData(int tailId)
         {
-            return _uavTelemetryData.TryGetValue(tailId, out Dictionary<TelemetryFields, double>? data)
+            return _uavTelemetryData.TryGetValue(
+                tailId,
+                out Dictionary<TelemetryFields, double>? data
+            )
                 ? data
                 : null;
         }
 
-        public IEnumerable<(int TailId, IEnumerable<KeyValuePair<TelemetryFields, double>> TelemetryData)> GetAllUAVTelemetryData()
+        public IEnumerable<UAVTelemetryDataDto> GetAllUAVTelemetryData()
         {
-            return _uavTelemetryData.Select(CreateTelemetrySnapshot);
+            return _uavTelemetryData
+                .Select(CreateTelemetrySnapshot)
+                .Select(data => new UAVTelemetryDataDto(data.TailId, data.TelemetryData));
         }
 
-        private (int TailId, IEnumerable<KeyValuePair<TelemetryFields, double>> TelemetryData) CreateTelemetrySnapshot(
-            KeyValuePair<int, Dictionary<TelemetryFields, double>> uavData)
+        private (
+            int TailId,
+            IEnumerable<KeyValuePair<TelemetryFields, double>> TelemetryData
+        ) CreateTelemetrySnapshot(KeyValuePair<int, Dictionary<TelemetryFields, double>> uavData)
         {
             return (uavData.Key, uavData.Value);
         }

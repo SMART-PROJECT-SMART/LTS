@@ -1,4 +1,5 @@
 ﻿using Core.Common.Enums;
+using LTS.Dto;
 
 namespace LTS.Services.UAVDataStorage
 {
@@ -11,6 +12,6 @@ namespace LTS.Services.UAVDataStorage
         );
         public void DeleteUAV(int tailId);
         public IEnumerable<KeyValuePair<TelemetryFields, double>>? GetUAVTelemetryData(int tailId);
-        public IEnumerable<(int TailId, IEnumerable<KeyValuePair<TelemetryFields, double>> TelemetryData)> GetAllUAVTelemetryData();
+        public IEnumerable<UAVTelemetryDataDto> GetAllUAVTelemetryData();
     }
 }
