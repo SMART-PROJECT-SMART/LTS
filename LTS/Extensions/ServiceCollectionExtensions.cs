@@ -19,6 +19,7 @@ using LTS.Services.UAVDataStorage;
 using LTS.Services.UAVDataStorage.Interfaces;
 using LTS.Services.UAVTelemetryFieldsReferenceCounter;
 using LTS.Services.UAVTelemetryFieldsReferenceCounter.Interfaces;
+using LTS.Services.UAVTopicDiscovery;
 using LTS.Services.WantedFieldsManager;
 using LTS.Services.WantedFieldsManager.Interfaces;
 using LTS.Services.WebSocket.Hubs;

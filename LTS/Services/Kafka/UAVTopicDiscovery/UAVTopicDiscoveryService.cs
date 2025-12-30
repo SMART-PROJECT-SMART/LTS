@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using Confluent.Kafka;
 using LTS.Common;
 using LTS.Configuration;
-using LTS.Services.UAVTopicDiscovery.Interfaces;
+using LTS.Services.Kafka.UAVTopicDiscovery.Interfaces;
 using Microsoft.Extensions.Options;
 
 namespace LTS.Services.UAVTopicDiscovery

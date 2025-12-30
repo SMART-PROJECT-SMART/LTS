@@ -1,6 +1,6 @@
 ﻿using LTS.Dto;
 using LTS.Services.Kafka.UAVSnapshotConsumer.Interfaces;
-using LTS.Services.UAVTopicDiscovery.Interfaces;
+using LTS.Services.Kafka.UAVTopicDiscovery.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LTS.Controllers

@@ -50,10 +50,12 @@ namespace LTS.Services.UAVDataStorage
         {
             return _uavTelemetryData
                 .Select(CreateTelemetrySnapshot)
-                .Select(data => new UAVTelemetryDataDto(
-                    data.TailId,
-                    data.TelemetryData.ToDictionary()
-                ));
+                .Select(data =>
+                {
+                    Dictionary<TelemetryFields, double> telemetryDict = data.TelemetryData.ToDictionary();
+                    UAVType uavType = ExtractUAVType(telemetryDict);
+                    return new UAVTelemetryDataDto(data.TailId, uavType, telemetryDict);
+                });
         }
 
         private (
@@ -62,6 +64,18 @@ namespace LTS.Services.UAVDataStorage
         ) CreateTelemetrySnapshot(KeyValuePair<int, Dictionary<TelemetryFields, double>> uavData)
         {
             return (uavData.Key, uavData.Value);
+        }
+
+        private static UAVType ExtractUAVType(Dictionary<TelemetryFields, double> telemetry)
+        {
+            if (!telemetry.TryGetValue(TelemetryFields.UAVTypeValue, out double typeValue))
+            {
+                throw new InvalidOperationException(
+                    "UAVTypeValue is missing from telemetry data. Ensure the simulation is sending UAVType."
+                );
+            }
+
+            return (UAVType)(int)typeValue;
         }
     }
 }

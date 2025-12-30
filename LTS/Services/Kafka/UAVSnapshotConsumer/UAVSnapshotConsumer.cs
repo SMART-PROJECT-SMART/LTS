@@ -4,7 +4,7 @@ using LTS.Common;
 using LTS.Configuration;
 using LTS.Dto;
 using LTS.Services.Kafka.UAVSnapshotConsumer.Interfaces;
-using LTS.Services.UAVTopicDiscovery.Interfaces;
+using LTS.Services.Kafka.UAVTopicDiscovery.Interfaces;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
@@ -62,7 +62,20 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
                 return null;
 
             Dictionary<TelemetryFields, double> telemetry = ParseTelemetry(payload);
-            return new UAVTelemetryDataDto(uavId, telemetry);
+            UAVType uavType = ExtractUAVType(telemetry);
+            return new UAVTelemetryDataDto(uavId, uavType, telemetry);
+        }
+
+        private static UAVType ExtractUAVType(Dictionary<TelemetryFields, double> telemetry)
+        {
+            if (!telemetry.TryGetValue(TelemetryFields.UAVTypeValue, out double typeValue))
+            {
+                throw new InvalidOperationException(
+                    "UAVTypeValue is missing from telemetry data. Ensure the simulation is sending UAVType."
+                );
+            }
+
+            return (UAVType)(int)typeValue;
         }
 
         private TopicPartition CreatePartition(int uavId)
