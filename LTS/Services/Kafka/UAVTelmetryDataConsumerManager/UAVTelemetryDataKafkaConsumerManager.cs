@@ -1,19 +1,23 @@
 ﻿using System.Collections.Concurrent;
 using Confluent.Kafka;
+using LTS.Configuration;
+using LTS.Services.Kafka.UAVTelemetryDataConsumer;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
 {
     public class UAVTelemetryDataKafkaConsumerManager : IUAVTelemetryDataKafkaConsumerManager
     {
         private readonly ConcurrentDictionary<string, IUAVTelemetryDataKafkaConsumer> _consumers;
-        private readonly IServiceProvider _serviceProvider;
+        private readonly KafkaConsumerConfiguration _kafkaConfig;
 
-        public UAVTelemetryDataKafkaConsumerManager(IServiceProvider serviceProvider)
+        public UAVTelemetryDataKafkaConsumerManager(
+            IOptions<KafkaConsumerConfiguration> kafkaConfig
+        )
         {
-            _serviceProvider = serviceProvider;
+            _kafkaConfig = kafkaConfig.Value;
             _consumers = new ConcurrentDictionary<string, IUAVTelemetryDataKafkaConsumer>();
         }
 
@@ -21,11 +25,8 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
         {
             _consumers.GetOrAdd(tailId, key =>
             {
-                IUAVTelemetryDataKafkaConsumer? newConsumer =
-                    _serviceProvider.GetService<IUAVTelemetryDataKafkaConsumer>();
-                if (newConsumer == null)
-                    throw new InvalidOperationException("Failed to create UAV telemetry data consumer");
-                newConsumer.SubsribeToTopic(key);
+                IUAVTelemetryDataKafkaConsumer newConsumer =
+                    new UAVTelemetryDataKafkaConsumer(_kafkaConfig, key);
                 return newConsumer;
             });
         }

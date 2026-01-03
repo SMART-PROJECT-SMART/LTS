@@ -65,7 +65,6 @@ namespace LTS.Extensions
                 appConfiguration.GetSection(LTSConstants.Kafka.KAFKA_CONFIGURATION_SECTION)
             );
 
-            AddUAVTelemetryDataKafkaConsumer(services);
             AddUAVTelemetryConsumerManager(services);
 
             services.AddSingleton<UAVTopicDiscoveryService>();
@@ -151,14 +150,6 @@ namespace LTS.Extensions
                 IUAVTelemetryDataKafkaConsumerManager,
                 UAVTelemetryDataKafkaConsumerManager
             >();
-            return services;
-        }
-
-        private static IServiceCollection AddUAVTelemetryDataKafkaConsumer(
-            this IServiceCollection services
-        )
-        {
-            services.AddTransient<IUAVTelemetryDataKafkaConsumer, UAVTelemetryDataKafkaConsumer>();
             return services;
         }
     }

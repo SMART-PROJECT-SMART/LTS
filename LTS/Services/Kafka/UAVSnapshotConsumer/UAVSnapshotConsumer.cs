@@ -131,7 +131,7 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
             ConsumerConfig consumerConfig = new ConsumerConfig
             {
                 BootstrapServers = config.BootstrapServers,
-                GroupId = $"{config.GroupId}{LTSConstants.Kafka.SNAPSHOT_CONSUMER_GROUP_SUFFIX}",
+                GroupId = $"{config.GroupIdPrefix}{LTSConstants.Kafka.SNAPSHOT_CONSUMER_GROUP_SUFFIX}",
                 EnableAutoCommit = false,
                 AutoOffsetReset = AutoOffsetReset.Latest,
             };

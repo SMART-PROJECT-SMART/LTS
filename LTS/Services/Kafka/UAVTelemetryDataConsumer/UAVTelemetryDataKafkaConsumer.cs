@@ -11,14 +11,14 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
         private readonly IConsumer<string, string> _kafkaConsumer;
 
         public UAVTelemetryDataKafkaConsumer(
-            IOptions<KafkaConsumerConfiguration> kafkaConsumerConfiguration
+            KafkaConsumerConfiguration kafkaConsumerConfiguration,
+            string tailId
         )
         {
             var consumerConfig = new ConsumerConfig
             {
-                BootstrapServers = kafkaConsumerConfiguration.Value.BootstrapServers,
-                GroupId = kafkaConsumerConfiguration.Value.GroupId,
-                EnableAutoCommit = kafkaConsumerConfiguration.Value.EnableAutoCommit,
+                BootstrapServers = kafkaConsumerConfiguration.BootstrapServers,
+                GroupId = $"{kafkaConsumerConfiguration.GroupIdPrefix}-tailId-{tailId}",
                 AutoOffsetReset = AutoOffsetReset.Latest,
             };
 
@@ -26,16 +26,13 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
                 .SetKeyDeserializer(Deserializers.Utf8)
                 .SetValueDeserializer(Deserializers.Utf8)
                 .Build();
+
+            _kafkaConsumer.Subscribe($"{LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX}{tailId}");
         }
 
         public ConsumeResult<string, string> ConsumeUAVTelemetryData()
         {
             return _kafkaConsumer.Consume();
-        }
-
-        public void SubsribeToTopic(string tailId)
-        {
-            _kafkaConsumer.Subscribe($"{LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX}{tailId}");
         }
 
         public void Dispose()
