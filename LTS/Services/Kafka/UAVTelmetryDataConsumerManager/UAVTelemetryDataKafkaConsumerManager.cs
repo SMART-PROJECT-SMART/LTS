@@ -38,11 +38,11 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
             }
         }
 
-        public IEnumerable<ConsumeResult<string, byte[]>> ConsumeUAVTelemetryData()
+        public IEnumerable<ConsumeResult<string, string>> ConsumeUAVTelemetryData()
         {
             foreach (IUAVTelemetryDataKafkaConsumer consumer in _consumers.Values)
             {
-                ConsumeResult<string, byte[]> uavsTelmetryData = consumer.ConsumeUAVTelemetryData();
+                ConsumeResult<string, string> uavsTelmetryData = consumer.ConsumeUAVTelemetryData();
                 yield return uavsTelmetryData;
             }
         }

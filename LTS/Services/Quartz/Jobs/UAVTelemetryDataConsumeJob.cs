@@ -28,7 +28,7 @@ namespace LTS.Services.Quartz.Jobs
             foreach (
                 ConsumeResult<
                     string,
-                    byte[]
+                    string
                 > consumeResult in _uavTelemetryDataKafkaConsumerManager.ConsumeUAVTelemetryData()
             )
             {
@@ -43,11 +43,9 @@ namespace LTS.Services.Quartz.Jobs
         }
 
         private IEnumerable<KeyValuePair<TelemetryFields, double>> DeserializeTelemetryData(
-            byte[] data
+            string json
         )
         {
-            string json = System.Text.Encoding.UTF8.GetString(data);
-
             Dictionary<TelemetryFields, double> telemetryDict = JsonConvert.DeserializeObject<
                 Dictionary<TelemetryFields, double>
             >(json, JsonSerializationSettings.TelemetrySettings)!;

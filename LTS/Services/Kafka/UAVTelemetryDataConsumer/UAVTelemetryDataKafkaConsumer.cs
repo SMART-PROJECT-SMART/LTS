@@ -8,7 +8,7 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
 {
     public class UAVTelemetryDataKafkaConsumer : IUAVTelemetryDataKafkaConsumer
     {
-        private readonly IConsumer<string, byte[]> _kafkaConsumer;
+        private readonly IConsumer<string, string> _kafkaConsumer;
 
         public UAVTelemetryDataKafkaConsumer(
             IOptions<KafkaConsumerConfiguration> kafkaConsumerConfiguration
@@ -22,13 +22,13 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
                 AutoOffsetReset = AutoOffsetReset.Latest,
             };
 
-            _kafkaConsumer = new ConsumerBuilder<string, byte[]>(consumerConfig)
+            _kafkaConsumer = new ConsumerBuilder<string, string>(consumerConfig)
                 .SetKeyDeserializer(Deserializers.Utf8)
-                .SetValueDeserializer(Deserializers.ByteArray)
+                .SetValueDeserializer(Deserializers.Utf8)
                 .Build();
         }
 
-        public ConsumeResult<string, byte[]> ConsumeUAVTelemetryData()
+        public ConsumeResult<string, string> ConsumeUAVTelemetryData()
         {
             return _kafkaConsumer.Consume();
         }

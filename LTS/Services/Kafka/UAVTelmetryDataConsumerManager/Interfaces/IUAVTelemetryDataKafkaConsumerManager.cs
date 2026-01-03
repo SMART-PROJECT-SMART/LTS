@@ -6,6 +6,6 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces
     {
         public void AddConsumer(string tailId);
         public void RemoveConsumer(string tailId);
-        public IEnumerable<ConsumeResult<string, byte[]>> ConsumeUAVTelemetryData();
+        public IEnumerable<ConsumeResult<string, string>> ConsumeUAVTelemetryData();
     }
 }

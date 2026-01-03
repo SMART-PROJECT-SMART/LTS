@@ -12,7 +12,7 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
 {
     public class UAVSnapshotConsumer : IUAVSnapshotConsumer, IDisposable
     {
-        private readonly IConsumer<string, byte[]> _kafkaConsumer;
+        private readonly IConsumer<string, string> _kafkaConsumer;
         private readonly IUAVTopicDiscoveryService _topicDiscoveryService;
         private readonly TimeSpan _consumeTimeout;
 
@@ -56,7 +56,7 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
             if (offset == null)
                 return null;
 
-            byte[]? payload = ConsumeAtOffset(partition, offset.Value);
+            string? payload = ConsumeAtOffset(partition, offset.Value);
 
             if (payload == null)
                 return null;
@@ -101,11 +101,11 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
             return watermarks.High - 1;
         }
 
-        private byte[]? ConsumeAtOffset(TopicPartition partition, Offset offset)
+        private string? ConsumeAtOffset(TopicPartition partition, Offset offset)
         {
             _kafkaConsumer.Assign([new TopicPartitionOffset(partition, offset)]);
 
-            ConsumeResult<string, byte[]> result = _kafkaConsumer.Consume(_consumeTimeout);
+            ConsumeResult<string, string> result = _kafkaConsumer.Consume(_consumeTimeout);
 
             if (result == null || result.IsPartitionEOF)
             {
@@ -115,19 +115,18 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
             return result.Message.Value;
         }
 
-        private Dictionary<TelemetryFields, double> ParseTelemetry(byte[] payload)
+        private Dictionary<TelemetryFields, double> ParseTelemetry(string json)
         {
-            if (payload.Length == 0)
+            if (string.IsNullOrEmpty(json))
                 return new Dictionary<TelemetryFields, double>();
 
-            string json = System.Text.Encoding.UTF8.GetString(payload);
             return JsonConvert.DeserializeObject<Dictionary<TelemetryFields, double>>(
                     json,
                     JsonSerializationSettings.TelemetrySettings
                 ) ?? new Dictionary<TelemetryFields, double>();
         }
 
-        private static IConsumer<string, byte[]> CreateConsumer(KafkaConsumerConfiguration config)
+        private static IConsumer<string, string> CreateConsumer(KafkaConsumerConfiguration config)
         {
             ConsumerConfig consumerConfig = new ConsumerConfig
             {
@@ -137,9 +136,9 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
                 AutoOffsetReset = AutoOffsetReset.Latest,
             };
 
-            return new ConsumerBuilder<string, byte[]>(consumerConfig)
+            return new ConsumerBuilder<string, string>(consumerConfig)
                 .SetKeyDeserializer(Deserializers.Utf8)
-                .SetValueDeserializer(Deserializers.ByteArray)
+                .SetValueDeserializer(Deserializers.Utf8)
                 .Build();
         }
     }
