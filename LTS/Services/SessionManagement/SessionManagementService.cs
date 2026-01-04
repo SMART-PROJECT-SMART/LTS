@@ -1,4 +1,5 @@
 using Core.Common.Enums;
+using LTS.Common;
 using LTS.Models;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
 using LTS.Services.SessionManagement.Interfaces;
@@ -30,38 +31,43 @@ namespace LTS.Services.SessionManagement
             RegisterNewUAVs(wantedFields.Select(subscription => subscription.TailId));
         }
 
-        public void UpdateSession(
+        public Result<bool> UpdateSession(
             string sessionId,
             IEnumerable<UAVFieldSubscription> newWantedFields
         )
         {
-            Dictionary<int, HashSet<TelemetryFields>>? oldWantedFields =
-                _wantedFieldsManager.GetSessionWantedFieldsById(sessionId);
-
-            if (oldWantedFields == null)
+            if (!_wantedFieldsManager.DoesSessionExist(sessionId))
             {
-                throw new InvalidOperationException($"Session {sessionId} not found");
+                return Result<bool>.Fail($"Session {sessionId} not found");
             }
+
+            Dictionary<int, HashSet<TelemetryFields>> oldWantedFields =
+                _wantedFieldsManager.GetSessionWantedFieldsById(sessionId)!;
 
             _wantedFieldsManager.UpdateWantedUAVFields(sessionId, newWantedFields);
             UpdateUAVConsumers(
                 oldWantedFields.Keys,
                 newWantedFields.Select(subscription => subscription.TailId)
             );
+
+            return Result<bool>.Ok(true);
         }
 
-        public void DeleteSession(string sessionId)
+        public Result<bool> DeleteSession(string sessionId)
         {
-            Dictionary<int, HashSet<TelemetryFields>>? sessionWantedFields =
-                _wantedFieldsManager.GetSessionWantedFieldsById(sessionId);
-            if (sessionWantedFields == null)
+            if (!_wantedFieldsManager.DoesSessionExist(sessionId))
             {
-                throw new InvalidOperationException($"Session {sessionId} not found");
+                return Result<bool>.Fail($"Session {sessionId} not found");
             }
+
+            Dictionary<int, HashSet<TelemetryFields>> sessionWantedFields =
+                _wantedFieldsManager.GetSessionWantedFieldsById(sessionId)!;
 
             IEnumerable<int> uavIdsToCheck = sessionWantedFields.Keys;
             _wantedFieldsManager.RemoveSession(sessionId);
             CleanupUnusedUAVs(uavIdsToCheck);
+
+            return Result<bool>.Ok(true);
         }
 
         private void UpdateUAVConsumers(IEnumerable<int> oldUavIds, IEnumerable<int> newUavIds)

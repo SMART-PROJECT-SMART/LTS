@@ -38,13 +38,13 @@ namespace LTS.Services.Quartz.Jobs
 
         private async Task ProcessSessionBroadcast(string sessionId)
         {
-            Dictionary<int, HashSet<TelemetryFields>>? sessionWantedFields =
-                _wantedUavFieldsManager.GetSessionWantedFieldsById(sessionId);
-
-            if (sessionWantedFields == null)
+            if (!_wantedUavFieldsManager.DoesSessionExist(sessionId))
             {
                 return;
             }
+
+            Dictionary<int, HashSet<TelemetryFields>> sessionWantedFields =
+                _wantedUavFieldsManager.GetSessionWantedFieldsById(sessionId)!;
 
             List<UAVTelemetryFieldsDto> uavDataList = BuildUAVTelemetryDataList(
                 sessionWantedFields
@@ -96,8 +96,8 @@ namespace LTS.Services.Quartz.Jobs
             }
 
             return telemetryData
-                .Where(kvp => wantedFields.Contains(kvp.Key))
-                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                .Where(telemetryField => wantedFields.Contains(telemetryField.Key))
+                .ToDictionary(telemetryField => telemetryField.Key, telemetryField => telemetryField.Value);
         }
 
         private async Task SendBroadcastToSession(

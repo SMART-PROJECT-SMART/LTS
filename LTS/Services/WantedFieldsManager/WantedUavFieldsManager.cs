@@ -32,9 +32,9 @@ namespace LTS.Services.WantedFieldsManager
 
             _sessionsWantedUAVFields[sessionId] = sessionFields;
 
-            foreach (KeyValuePair<int, HashSet<TelemetryFields>> kvp in sessionFields)
+            foreach (KeyValuePair<int, HashSet<TelemetryFields>> uavFieldsEntry in sessionFields)
             {
-                _fieldReferenceCounter.IncrementFieldReferences(kvp.Key, kvp.Value);
+                _fieldReferenceCounter.IncrementFieldReferences(uavFieldsEntry.Key, uavFieldsEntry.Value);
             }
         }
 
@@ -76,9 +76,9 @@ namespace LTS.Services.WantedFieldsManager
                 return false;
             }
 
-            foreach (KeyValuePair<int, HashSet<TelemetryFields>> kvp in removedSession)
+            foreach (KeyValuePair<int, HashSet<TelemetryFields>> uavFieldsEntry in removedSession)
             {
-                _fieldReferenceCounter.DecrementFieldReferences(kvp.Key, kvp.Value);
+                _fieldReferenceCounter.DecrementFieldReferences(uavFieldsEntry.Key, uavFieldsEntry.Value);
             }
 
             return true;

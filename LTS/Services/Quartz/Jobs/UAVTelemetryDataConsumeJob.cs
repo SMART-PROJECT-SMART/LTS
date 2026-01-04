@@ -32,7 +32,10 @@ namespace LTS.Services.Quartz.Jobs
                 > consumeResult in _uavTelemetryDataKafkaConsumerManager.ConsumeUAVTelemetryData()
             )
             {
-                TryParse(consumeResult.Message.Key, out int tailId);
+                if (!TryParse(consumeResult.Message.Key, out int tailId))
+                {
+                    continue;
+                }
 
                 IEnumerable<KeyValuePair<TelemetryFields, double>> telemetryData =
                     DeserializeTelemetryData(consumeResult.Message.Value);
