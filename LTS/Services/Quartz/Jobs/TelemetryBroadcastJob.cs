@@ -62,6 +62,7 @@ namespace LTS.Services.Quartz.Jobs
         )
         {
             return sessionWantedFields
+                .Where(uavSubscription => uavSubscription.Value.Count > 0)
                 .Select(uavSubscription =>
                     BuildUAVTelemetryDto(uavSubscription.Key, uavSubscription.Value)
                 )
