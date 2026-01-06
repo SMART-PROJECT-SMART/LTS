@@ -28,7 +28,10 @@ namespace LTS.Services.UAVDataStorage
             IEnumerable<KeyValuePair<TelemetryFields, double>> telemetryData
         )
         {
-            _uavTelemetryData[tailId] = telemetryData.ToDictionary(kv => kv.Key, kv => kv.Value);
+            _uavTelemetryData[tailId] = telemetryData.ToDictionary(
+                telemetryField => telemetryField.Key,
+                telemetryField => telemetryField.Value
+            );
         }
 
         public void DeleteUAV(int tailId)
@@ -49,21 +52,15 @@ namespace LTS.Services.UAVDataStorage
         public IEnumerable<UAVTelemetryDataDto> GetAllUAVTelemetryData()
         {
             return _uavTelemetryData
-                .Select(CreateTelemetrySnapshot)
-                .Select(data =>
+                .Select(uavEntry =>
                 {
-                    Dictionary<TelemetryFields, double> telemetryDict = data.TelemetryData.ToDictionary();
+                    Dictionary<TelemetryFields, double> telemetryDict = uavEntry.Value.ToDictionary(
+                        telemetryField => telemetryField.Key,
+                        telemetryField => telemetryField.Value
+                    );
                     UAVType uavType = ExtractUAVType(telemetryDict);
-                    return new UAVTelemetryDataDto(data.TailId, uavType, telemetryDict);
+                    return new UAVTelemetryDataDto(uavEntry.Key, uavType, telemetryDict);
                 });
-        }
-
-        private (
-            int TailId,
-            IEnumerable<KeyValuePair<TelemetryFields, double>> TelemetryData
-        ) CreateTelemetrySnapshot(KeyValuePair<int, Dictionary<TelemetryFields, double>> uavData)
-        {
-            return (uavData.Key, uavData.Value);
         }
 
         private static UAVType ExtractUAVType(Dictionary<TelemetryFields, double> telemetry)
