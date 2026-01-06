@@ -50,7 +50,7 @@ namespace LTS.Services.Quartz.Jobs
                 sessionWantedFields
             );
 
-            if (uavDataList.Count != 0)
+            if (uavDataList.Count > 0)
             {
                 TelemetryBroadcastDto broadcastDto = new TelemetryBroadcastDto(uavDataList);
                 await SendBroadcastToSession(sessionId, broadcastDto);
@@ -65,7 +65,7 @@ namespace LTS.Services.Quartz.Jobs
                 .Select(uavSubscription =>
                     BuildUAVTelemetryDto(uavSubscription.Key, uavSubscription.Value)
                 )
-                .Where(dto => dto.Fields.Count != 0)
+                .Where(dto => dto.Fields.Count > 0)
                 .ToList();
         }
 

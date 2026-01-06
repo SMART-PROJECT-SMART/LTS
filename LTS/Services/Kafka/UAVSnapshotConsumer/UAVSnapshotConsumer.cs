@@ -93,12 +93,12 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
                 _consumeTimeout
             );
 
-            if (watermarks.High.Value <= 0 || watermarks.High <= watermarks.Low)
+            if (watermarks.High.Value <= LTSConstants.Kafka.EMPTY_TOPIC_OFFSET || watermarks.High <= watermarks.Low)
             {
                 return null;
             }
 
-            return watermarks.High - 1;
+            return watermarks.High - LTSConstants.Kafka.LAST_MESSAGE_OFFSET_ADJUSTMENT;
         }
 
         private string? ConsumeAtOffset(TopicPartition partition, Offset offset)

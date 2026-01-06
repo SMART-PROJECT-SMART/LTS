@@ -23,9 +23,20 @@ namespace LTS.Services.Quartz.TelemetryBroadcast
             return true;
         }
 
-        public Task<bool> StopSchedular()
+        public async Task<bool> StopSchedular()
         {
-            throw new NotImplementedException();
+            if (_scheduler == null)
+            {
+                return false;
+            }
+
+            TriggerKey triggerKey = new TriggerKey(
+                LTSConstants.Quartz.TELEMETRY_BROADCAST_TRIGGER_ID,
+                LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_GROUP
+            );
+
+            bool unscheduled = await _scheduler.UnscheduleJob(triggerKey);
+            return unscheduled;
         }
 
         private ITrigger CreateTelemetryBroadcastTrigger(int intervalSeconds)
