@@ -1,10 +1,19 @@
 ﻿using LTS.Common;
+using LTS.Models;
+using LTS.Services.SessionManagement.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 
 namespace LTS.Services.WebSocket.Hubs
 {
     public class TelemetryBroadcastHub : Hub
     {
+        private readonly ISessionManagementService _sessionManagementService;
+
+        public TelemetryBroadcastHub(ISessionManagementService sessionManagementService)
+        {
+            _sessionManagementService = sessionManagementService;
+        }
+
         public override async Task OnConnectedAsync()
         {
             HttpContext? httpContext = Context.GetHttpContext();
@@ -14,8 +23,13 @@ namespace LTS.Services.WebSocket.Hubs
 
             if (!string.IsNullOrEmpty(sessionId))
             {
+                _sessionManagementService.CreateSession(sessionId, Enumerable.Empty<UAVFieldSubscription>());
+
                 Context.Items[LTSConstants.WebSocket.SESSION_ID_KEY] = sessionId;
                 await Groups.AddToGroupAsync(Context.ConnectionId, sessionId);
+
+                await Clients.Caller.SendAsync(LTSConstants.WebSocket.SESSION_READY_METHOD, sessionId);
+
                 await base.OnConnectedAsync();
                 return;
             }

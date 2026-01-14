@@ -4,6 +4,7 @@ using LTS.Common;
 using LTS.Configuration;
 using LTS.Services.Kafka.UAVTopicDiscovery.Interfaces;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
 namespace LTS.Services.UAVTopicDiscovery
 {
@@ -12,12 +13,14 @@ namespace LTS.Services.UAVTopicDiscovery
         private readonly ConcurrentDictionary<int, byte> _cachedUAVIds;
         private readonly KafkaConsumerConfiguration _consumerConfig;
         private readonly int _prefixLength;
+        private readonly ILogger<UAVTopicDiscoveryService> _logger;
 
-        public UAVTopicDiscoveryService(IOptions<KafkaConsumerConfiguration> consumerConfig)
+        public UAVTopicDiscoveryService(IOptions<KafkaConsumerConfiguration> consumerConfig, ILogger<UAVTopicDiscoveryService> logger)
         {
             _cachedUAVIds = new ConcurrentDictionary<int, byte>();
             _consumerConfig = consumerConfig.Value;
             _prefixLength = LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX.Length;
+            _logger = logger;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -34,6 +37,10 @@ namespace LTS.Services.UAVTopicDiscovery
         public Task DiscoverAndCacheUAVTopicsAsync()
         {
             DiscoverAndCacheUAVTopics();
+            foreach (var keyValuePair in _cachedUAVIds)
+            {
+                _logger.LogInformation("found topic:"+keyValuePair.Key);
+            }
             return Task.CompletedTask;
         }
 

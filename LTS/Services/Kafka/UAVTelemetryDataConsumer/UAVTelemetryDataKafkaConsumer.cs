@@ -20,6 +20,7 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
                 BootstrapServers = kafkaConsumerConfiguration.BootstrapServers,
                 GroupId = $"{kafkaConsumerConfiguration.GroupIdPrefix}-tailId-{tailId}",
                 AutoOffsetReset = AutoOffsetReset.Latest,
+                EnableAutoOffsetStore = false,
             };
 
             _kafkaConsumer = new ConsumerBuilder<string, string>(consumerConfig)
@@ -32,7 +33,7 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
 
         public ConsumeResult<string, string> ConsumeUAVTelemetryData()
         {
-            return _kafkaConsumer.Consume();
+            return _kafkaConsumer.Consume(TimeSpan.FromSeconds(LTSConstants.Kafka.CONSUME_TIMEOUT_SECONDS));
         }
 
         public void Dispose()

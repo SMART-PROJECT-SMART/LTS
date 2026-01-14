@@ -9,7 +9,7 @@
             public const string SNAPSHOT_CONSUMER_GROUP_SUFFIX = "-snapshot";
             public const int DEFAULT_PARTITION = 1;
             public const int METADATA_TIMEOUT_SECONDS = 10;
-            public const int CONSUME_TIMEOUT_SECONDS = 5;
+            public const int CONSUME_TIMEOUT_SECONDS = 1;
 
             public const long EMPTY_TOPIC_OFFSET = 0;
             public const int LAST_MESSAGE_OFFSET_ADJUSTMENT = 1;
@@ -21,6 +21,7 @@
             public const string SESSION_ID_KEY = "SessionId";
             public const string WANTED_UAVS_FIELDS_FIELD = "wantedUAVsFields";
             public const string RECIVE_TELEMETRY_DATA_METHOD = "ReceiveTelemetryData";
+            public const string SESSION_READY_METHOD = "SessionReady";
         }
 
         public static class Quartz
@@ -43,6 +44,11 @@
         public static class Hub
         {
             public const string TELEMETRY_HUB_ENDPOINT = "/hub/telemetry";
+        }
+
+        public static class Subscription
+        {
+            public const int WILDCARD_UAV_ID = -1;
         }
     }
 }

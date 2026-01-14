@@ -32,6 +32,11 @@ namespace LTS.Services.Quartz.Jobs
                 > consumeResult in _uavTelemetryDataKafkaConsumerManager.ConsumeUAVTelemetryData()
             )
             {
+                if (consumeResult == null || consumeResult.Message == null)
+                {
+                    continue;
+                }
+
                 if (!TryParse(consumeResult.Message.Key, out int tailId))
                 {
                     continue;

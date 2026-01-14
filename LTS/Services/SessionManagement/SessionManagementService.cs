@@ -2,6 +2,7 @@ using Core.Common.Enums;
 using LTS.Common;
 using LTS.Models;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
+using LTS.Services.Kafka.UAVTopicDiscovery.Interfaces;
 using LTS.Services.SessionManagement.Interfaces;
 using LTS.Services.UAVDataStorage.Interfaces;
 using LTS.Services.WantedFieldsManager.Interfaces;
@@ -13,22 +14,26 @@ namespace LTS.Services.SessionManagement
         private readonly IWantedUAVFieldsManager _wantedFieldsManager;
         private readonly IUAVTelemetryDataKafkaConsumerManager _consumerManager;
         private readonly IUAVTelemetryDataStorage _storage;
+        private readonly IUAVTopicDiscoveryService _topicDiscoveryService;
 
         public SessionManagementService(
             IWantedUAVFieldsManager wantedFieldsManager,
             IUAVTelemetryDataKafkaConsumerManager consumerManager,
-            IUAVTelemetryDataStorage storage
+            IUAVTelemetryDataStorage storage,
+            IUAVTopicDiscoveryService topicDiscoveryService
         )
         {
             _wantedFieldsManager = wantedFieldsManager;
             _consumerManager = consumerManager;
             _storage = storage;
+            _topicDiscoveryService = topicDiscoveryService;
         }
 
         public void CreateSession(string sessionId, IEnumerable<UAVFieldSubscription> wantedFields)
         {
-            _wantedFieldsManager.CreateSession(sessionId, wantedFields);
-            RegisterNewUAVs(wantedFields.Select(subscription => subscription.TailId));
+            IEnumerable<UAVFieldSubscription> expandedFields = ExpandWildcardSubscriptions(wantedFields);
+            _wantedFieldsManager.CreateSession(sessionId, expandedFields);
+            RegisterNewUAVs(expandedFields.Select(subscription => subscription.TailId));
         }
 
         public Result<bool> UpdateSession(
@@ -44,10 +49,11 @@ namespace LTS.Services.SessionManagement
             Dictionary<int, HashSet<TelemetryFields>> oldWantedFields =
                 _wantedFieldsManager.GetSessionWantedFieldsById(sessionId)!;
 
-            _wantedFieldsManager.UpdateWantedUAVFields(sessionId, newWantedFields);
+            IEnumerable<UAVFieldSubscription> expandedFields = ExpandWildcardSubscriptions(newWantedFields);
+            _wantedFieldsManager.UpdateWantedUAVFields(sessionId, expandedFields);
             UpdateUAVConsumers(
                 oldWantedFields.Keys,
-                newWantedFields.Select(subscription => subscription.TailId)
+                expandedFields.Select(subscription => subscription.TailId)
             );
 
             return Result<bool>.Ok(true);
@@ -105,6 +111,34 @@ namespace LTS.Services.SessionManagement
         {
             _consumerManager.RemoveConsumer(uavId.ToString());
             _storage.DeleteUAV(uavId);
+        }
+
+        private IEnumerable<UAVFieldSubscription> ExpandWildcardSubscriptions(
+            IEnumerable<UAVFieldSubscription> subscriptions
+        )
+        {
+            UAVFieldSubscription? wildcardSubscription = subscriptions.FirstOrDefault(
+                subscription => subscription.TailId == LTSConstants.Subscription.WILDCARD_UAV_ID
+            );
+
+            if (wildcardSubscription == null)
+            {
+                return subscriptions;
+            }
+
+            IEnumerable<int> allDiscoveredUavIds = _topicDiscoveryService.GetAllCachedUAVIds();
+
+            IEnumerable<UAVFieldSubscription> expandedWildcardSubscriptions =
+                allDiscoveredUavIds.Select(uavId => new UAVFieldSubscription(
+                    uavId,
+                    wildcardSubscription.WantedFields
+                ));
+
+            IEnumerable<UAVFieldSubscription> nonWildcardSubscriptions = subscriptions.Where(
+                subscription => subscription.TailId != LTSConstants.Subscription.WILDCARD_UAV_ID
+            );
+
+            return nonWildcardSubscriptions.Concat(expandedWildcardSubscriptions);
         }
     }
 }
