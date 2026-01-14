@@ -56,11 +56,6 @@ namespace LTS.Services.Quartz.Jobs
             if (uavDataList.Count > 0)
             {
                 TelemetryBroadcastDto broadcastDto = new TelemetryBroadcastDto(uavDataList);
-                _logger.LogInformation(
-                    "Broadcasting telemetry data to session {SessionId} with {UAVCount} UAVs",
-                    sessionId,
-                    uavDataList.Count
-                );
                 await SendBroadcastToSession(sessionId, broadcastDto);
             }
         }

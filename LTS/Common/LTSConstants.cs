@@ -10,7 +10,6 @@
             public const int DEFAULT_PARTITION = 1;
             public const int METADATA_TIMEOUT_SECONDS = 10;
             public const int CONSUME_TIMEOUT_SECONDS = 1;
-
             public const long EMPTY_TOPIC_OFFSET = 0;
             public const int LAST_MESSAGE_OFFSET_ADJUSTMENT = 1;
         }

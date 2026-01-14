@@ -1,7 +1,8 @@
-﻿using Confluent.Kafka;
+using Confluent.Kafka;
 using LTS.Common;
 using LTS.Configuration;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
@@ -12,15 +13,13 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
 
         public UAVTelemetryDataKafkaConsumer(
             KafkaConsumerConfiguration kafkaConsumerConfiguration,
-            string tailId
-        )
+            string tailId)
         {
             var consumerConfig = new ConsumerConfig
             {
                 BootstrapServers = kafkaConsumerConfiguration.BootstrapServers,
                 GroupId = $"{kafkaConsumerConfiguration.GroupIdPrefix}-tailId-{tailId}",
-                AutoOffsetReset = AutoOffsetReset.Latest,
-                EnableAutoOffsetStore = false,
+                AutoOffsetReset = AutoOffsetReset.Latest
             };
 
             _kafkaConsumer = new ConsumerBuilder<string, string>(consumerConfig)

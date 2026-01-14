@@ -1,9 +1,11 @@
 ﻿using System.Collections.Concurrent;
 using Confluent.Kafka;
+using LTS.Common;
 using LTS.Configuration;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
@@ -11,21 +13,16 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
     public class UAVTelemetryDataKafkaConsumerManager : IUAVTelemetryDataKafkaConsumerManager
     {
         private readonly ConcurrentDictionary<string, IUAVTelemetryDataKafkaConsumer> _consumers;
-        private readonly ConcurrentDictionary<string, int> _consumerTimeoutCounts;
         private readonly KafkaConsumerConfiguration _kafkaConfig;
-        private int _pollCycleCount;
-
-        private const int TIMEOUT_THRESHOLD = 3;
-        private const int RETRY_CYCLE_INTERVAL = 10;
+        private readonly ILogger<UAVTelemetryDataKafkaConsumerManager> _logger;
 
         public UAVTelemetryDataKafkaConsumerManager(
-            IOptions<KafkaConsumerConfiguration> kafkaConfig
-        )
+            IOptions<KafkaConsumerConfiguration> kafkaConfig,
+            ILogger<UAVTelemetryDataKafkaConsumerManager> logger)
         {
             _kafkaConfig = kafkaConfig.Value;
             _consumers = new ConcurrentDictionary<string, IUAVTelemetryDataKafkaConsumer>();
-            _consumerTimeoutCounts = new ConcurrentDictionary<string, int>();
-            _pollCycleCount = 0;
+            _logger = logger;
         }
 
         public void AddConsumer(string tailId)
@@ -43,37 +40,28 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
             if (_consumers.TryRemove(tailId, out IUAVTelemetryDataKafkaConsumer? consumerToRemove))
             {
                 consumerToRemove.Dispose();
-                _consumerTimeoutCounts.TryRemove(tailId, out _);
             }
         }
 
         public IEnumerable<ConsumeResult<string, string>> ConsumeUAVTelemetryData()
         {
-            _pollCycleCount++;
-            bool isRetryCycle = _pollCycleCount % RETRY_CYCLE_INTERVAL == 0;
+            _logger.LogInformation("[CONSUME] Starting consume cycle at {Time}", DateTime.Now.ToString("HH:mm:ss.fff"));
 
             foreach (KeyValuePair<string, IUAVTelemetryDataKafkaConsumer> consumerEntry in _consumers)
             {
                 string tailId = consumerEntry.Key;
                 IUAVTelemetryDataKafkaConsumer consumer = consumerEntry.Value;
 
-                int timeoutCount = _consumerTimeoutCounts.GetOrAdd(tailId, 0);
-
-                if (!isRetryCycle && timeoutCount >= TIMEOUT_THRESHOLD)
-                {
-                    continue;
-                }
-
                 ConsumeResult<string, string> uavsTelmetryData = consumer.ConsumeUAVTelemetryData();
 
                 if (uavsTelmetryData != null)
                 {
-                    _consumerTimeoutCounts[tailId] = 0;
+                    _logger.LogInformation("[CONSUME] UAV {TailId} - GOT DATA at {Time}", tailId, DateTime.Now.ToString("HH:mm:ss.fff"));
                     yield return uavsTelmetryData;
                 }
                 else
                 {
-                    _consumerTimeoutCounts[tailId] = timeoutCount + 1;
+                    _logger.LogInformation("[CONSUME] UAV {TailId} - TIMEOUT (null) at {Time}", tailId, DateTime.Now.ToString("HH:mm:ss.fff"));
                 }
             }
         }
