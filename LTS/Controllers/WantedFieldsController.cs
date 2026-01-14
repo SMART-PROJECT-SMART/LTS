@@ -24,7 +24,7 @@ namespace LTS.Controllers
             [FromBody] UpdateWantedFieldsDto request
         )
         {
-            Result<bool> result = _sessionManagementService.UpdateSession(sessionId, request.WantedFields);
+            Result<bool> result = _sessionManagementService.UpdateSession(sessionId, request.WantedFields).Result;
 
             if (!result.Success)
             {

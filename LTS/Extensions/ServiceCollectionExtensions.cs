@@ -1,5 +1,7 @@
 ﻿using LTS.Common;
 using LTS.Configuration;
+using LTS.Services.ActiveUAVFetcher;
+using LTS.Services.ActiveUAVFetcher.Interfaces;
 using LTS.Services.Kafka.UAVSnapshotConsumer;
 using LTS.Services.Kafka.UAVSnapshotConsumer.Interfaces;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer;
@@ -77,6 +79,22 @@ namespace LTS.Extensions
 
             services.AddScoped<IUAVSnapshotConsumer, UAVSnapshotConsumer>();
 
+            return services;
+        }
+
+        public static IServiceCollection AddHttpClients(this IServiceCollection services,IConfiguration configuration)
+        {
+            services.AddHttpClient(LTSConstants.HttpClients.SIMULATOR_HTTP_CLIENT, client =>
+            {
+                string? baseAddress =
+                    configuration.GetSection(LTSConstants.HttpClients.SIMULATOR_CONFIG_SECTION)[
+                        LTSConstants.HttpClients.BASE_ADDRESS_KEY];
+                if (!string.IsNullOrEmpty(baseAddress))
+                {
+                    client.BaseAddress = new Uri(baseAddress);
+                }
+            });
+            services.AddSingleton<IActiveUAVFetcher, ActiveUAVFetcher>();
             return services;
         }
 

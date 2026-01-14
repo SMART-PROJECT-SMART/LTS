@@ -1,6 +1,8 @@
+using System.Collections;
 using Core.Common.Enums;
 using LTS.Common;
 using LTS.Models;
+using LTS.Services.ActiveUAVFetcher.Interfaces;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
 using LTS.Services.Kafka.UAVTopicDiscovery.Interfaces;
 using LTS.Services.SessionManagement.Interfaces;
@@ -14,31 +16,32 @@ namespace LTS.Services.SessionManagement
         private readonly IWantedUAVFieldsManager _wantedFieldsManager;
         private readonly IUAVTelemetryDataKafkaConsumerManager _consumerManager;
         private readonly IUAVTelemetryDataStorage _storage;
-        private readonly IUAVTopicDiscoveryService _topicDiscoveryService;
+        private readonly IActiveUAVFetcher _activeUAVFetcher;
 
         public SessionManagementService(
             IWantedUAVFieldsManager wantedFieldsManager,
             IUAVTelemetryDataKafkaConsumerManager consumerManager,
             IUAVTelemetryDataStorage storage,
-            IUAVTopicDiscoveryService topicDiscoveryService
+            IActiveUAVFetcher activeUavFetcher
         )
         {
             _wantedFieldsManager = wantedFieldsManager;
             _consumerManager = consumerManager;
             _storage = storage;
-            _topicDiscoveryService = topicDiscoveryService;
+            _activeUAVFetcher = activeUavFetcher;
         }
 
-        public void CreateSession(string sessionId, IEnumerable<UAVFieldSubscription> wantedFields)
+        public async void CreateSession(string sessionId, IEnumerable<UAVFieldSubscription> wantedFields, CancellationToken cancellationToken = default)
         {
-            IEnumerable<UAVFieldSubscription> expandedFields = ExpandWildcardSubscriptions(wantedFields);
+            IEnumerable<UAVFieldSubscription> expandedFields = await ExpandWildcardSubscriptions(wantedFields, cancellationToken);
             _wantedFieldsManager.CreateSession(sessionId, expandedFields);
             RegisterNewUAVs(expandedFields.Select(subscription => subscription.TailId));
         }
 
-        public Result<bool> UpdateSession(
+        public async Task<Result<bool>> UpdateSession(
             string sessionId,
-            IEnumerable<UAVFieldSubscription> newWantedFields
+            IEnumerable<UAVFieldSubscription> newWantedFields,
+            CancellationToken cancellationToken = default
         )
         {
             if (!_wantedFieldsManager.DoesSessionExist(sessionId))
@@ -49,7 +52,7 @@ namespace LTS.Services.SessionManagement
             Dictionary<int, HashSet<TelemetryFields>> oldWantedFields =
                 _wantedFieldsManager.GetSessionWantedFieldsById(sessionId)!;
 
-            IEnumerable<UAVFieldSubscription> expandedFields = ExpandWildcardSubscriptions(newWantedFields);
+            IEnumerable<UAVFieldSubscription> expandedFields = await ExpandWildcardSubscriptions(newWantedFields, cancellationToken);
             _wantedFieldsManager.UpdateWantedUAVFields(sessionId, expandedFields);
             UpdateUAVConsumers(
                 oldWantedFields.Keys,
@@ -113,8 +116,9 @@ namespace LTS.Services.SessionManagement
             _storage.DeleteUAV(uavId);
         }
 
-        private IEnumerable<UAVFieldSubscription> ExpandWildcardSubscriptions(
-            IEnumerable<UAVFieldSubscription> subscriptions
+        private async Task<IEnumerable<UAVFieldSubscription>> ExpandWildcardSubscriptions(
+            IEnumerable<UAVFieldSubscription> subscriptions,
+            CancellationToken cancellationToken = default
         )
         {
             UAVFieldSubscription? wildcardSubscription = subscriptions.FirstOrDefault(
@@ -126,7 +130,8 @@ namespace LTS.Services.SessionManagement
                 return subscriptions;
             }
 
-            IEnumerable<int> allDiscoveredUavIds = _topicDiscoveryService.GetAllCachedUAVIds();
+
+            IEnumerable<int> allDiscoveredUavIds = await _activeUAVFetcher.GetActiveUAVsTailId(cancellationToken);
 
             IEnumerable<UAVFieldSubscription> expandedWildcardSubscriptions =
                 allDiscoveredUavIds.Select(uavId => new UAVFieldSubscription(

@@ -45,7 +45,6 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
 
         public IEnumerable<ConsumeResult<string, string>> ConsumeUAVTelemetryData()
         {
-            _logger.LogInformation("[CONSUME] Starting consume cycle at {Time}", DateTime.Now.ToString("HH:mm:ss.fff"));
 
             foreach (KeyValuePair<string, IUAVTelemetryDataKafkaConsumer> consumerEntry in _consumers)
             {
@@ -56,12 +55,7 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
 
                 if (uavsTelmetryData != null)
                 {
-                    _logger.LogInformation("[CONSUME] UAV {TailId} - GOT DATA at {Time}", tailId, DateTime.Now.ToString("HH:mm:ss.fff"));
                     yield return uavsTelmetryData;
-                }
-                else
-                {
-                    _logger.LogInformation("[CONSUME] UAV {TailId} - TIMEOUT (null) at {Time}", tailId, DateTime.Now.ToString("HH:mm:ss.fff"));
                 }
             }
         }

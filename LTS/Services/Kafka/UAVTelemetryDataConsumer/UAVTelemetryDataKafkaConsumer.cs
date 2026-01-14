@@ -10,11 +10,12 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
     public class UAVTelemetryDataKafkaConsumer : IUAVTelemetryDataKafkaConsumer
     {
         private readonly IConsumer<string, string> _kafkaConsumer;
-
+        private bool _isDisposed;
         public UAVTelemetryDataKafkaConsumer(
             KafkaConsumerConfiguration kafkaConsumerConfiguration,
             string tailId)
         {
+            _isDisposed = false;
             var consumerConfig = new ConsumerConfig
             {
                 BootstrapServers = kafkaConsumerConfiguration.BootstrapServers,
@@ -32,11 +33,12 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
 
         public ConsumeResult<string, string> ConsumeUAVTelemetryData()
         {
-            return _kafkaConsumer.Consume(TimeSpan.FromSeconds(LTSConstants.Kafka.CONSUME_TIMEOUT_SECONDS));
+            return !_isDisposed ? _kafkaConsumer.Consume() : null;
         }
 
         public void Dispose()
         {
+            _isDisposed = true;
             _kafkaConsumer.Unsubscribe();
             _kafkaConsumer.Dispose();
         }

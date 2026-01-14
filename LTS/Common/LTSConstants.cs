@@ -49,5 +49,17 @@
         {
             public const int WILDCARD_UAV_ID = -1;
         }
+
+        public static class HttpClients
+        {
+            public const string SIMULATOR_HTTP_CLIENT = "Simulator";
+            public const string SIMULATOR_CONFIG_SECTION = "Simulator";
+            public const string BASE_ADDRESS_KEY = "BaseUrl";
+        }
+
+        public static class SimulatorEndpoints
+        {
+            public const string GET_ACTIVE_UAV_ENDPOINT = "api/UAVStatus/active-uav";
+        }
     }
 }

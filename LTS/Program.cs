@@ -7,6 +7,7 @@ builder.Services.AddKafkaServices(builder.Configuration);
 builder.Services.AddWantedUAVFieldsManager();
 builder.Services.AddUAVTelemetryDataStorage();
 builder.Services.AddQuartzScheduler(builder.Configuration);
+builder.Services.AddHttpClients(builder.Configuration);
 
 WebApplication app = builder.Build();
 app.UseCors();
