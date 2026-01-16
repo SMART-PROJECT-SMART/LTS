@@ -107,6 +107,8 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
 
             ConsumeResult<string, string> result = _kafkaConsumer.Consume(_consumeTimeout);
 
+            _kafkaConsumer.Unassign();
+
             if (result == null || result.IsPartitionEOF)
             {
                 return null;
