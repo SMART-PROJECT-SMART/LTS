@@ -60,6 +60,7 @@
         public static class SimulatorEndpoints
         {
             public const string GET_ACTIVE_UAV_ENDPOINT = "api/UAVStatus/active-uav";
+            public const string GET_ALL_UAV_ENDPOINT = "api/UAVStatus/all-uav";
         }
     }
 }

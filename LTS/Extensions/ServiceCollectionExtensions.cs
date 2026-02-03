@@ -8,8 +8,6 @@ using LTS.Services.Kafka.UAVTelemetryDataConsumer;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
-using LTS.Services.Kafka.UAVTopicDiscovery;
-using LTS.Services.Kafka.UAVTopicDiscovery.Interfaces;
 using LTS.Services.Quartz.Jobs;
 using LTS.Services.Quartz.TelemetryBroadcast;
 using LTS.Services.Quartz.TelemetryBroadcast.Interfaces;
@@ -21,7 +19,6 @@ using LTS.Services.UAVDataStorage;
 using LTS.Services.UAVDataStorage.Interfaces;
 using LTS.Services.UAVTelemetryFieldsReferenceCounter;
 using LTS.Services.UAVTelemetryFieldsReferenceCounter.Interfaces;
-using LTS.Services.UAVTopicDiscovery;
 using LTS.Services.WantedFieldsManager;
 using LTS.Services.WantedFieldsManager.Interfaces;
 using LTS.Services.WebSocket.Hubs;
@@ -69,14 +66,6 @@ namespace LTS.Extensions
 
             AddUAVTelemetryConsumerManager(services);
 
-            services.AddSingleton<UAVTopicDiscoveryService>();
-            services.AddSingleton<IUAVTopicDiscoveryService>(sp =>
-                sp.GetRequiredService<UAVTopicDiscoveryService>()
-            );
-            services.AddHostedService<UAVTopicDiscoveryService>(sp =>
-                sp.GetRequiredService<UAVTopicDiscoveryService>()
-            );
-
             services.AddScoped<IUAVSnapshotConsumer, UAVSnapshotConsumer>();
 
             return services;
@@ -94,7 +83,7 @@ namespace LTS.Extensions
                     client.BaseAddress = new Uri(baseAddress);
                 }
             });
-            services.AddSingleton<IActiveUAVFetcher, ActiveUAVFetcher>();
+            services.AddSingleton<IUAVFetcher, UAVFetcher>();
             return services;
         }
 

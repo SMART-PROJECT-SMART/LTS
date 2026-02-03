@@ -4,7 +4,6 @@ using LTS.Common;
 using LTS.Models;
 using LTS.Services.ActiveUAVFetcher.Interfaces;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
-using LTS.Services.Kafka.UAVTopicDiscovery.Interfaces;
 using LTS.Services.SessionManagement.Interfaces;
 using LTS.Services.UAVDataStorage.Interfaces;
 using LTS.Services.WantedFieldsManager.Interfaces;
@@ -16,19 +15,19 @@ namespace LTS.Services.SessionManagement
         private readonly IWantedUAVFieldsManager _wantedFieldsManager;
         private readonly IUAVTelemetryDataKafkaConsumerManager _consumerManager;
         private readonly IUAVTelemetryDataStorage _storage;
-        private readonly IActiveUAVFetcher _activeUAVFetcher;
+        private readonly IUAVFetcher _UAVFetcher;
 
         public SessionManagementService(
             IWantedUAVFieldsManager wantedFieldsManager,
             IUAVTelemetryDataKafkaConsumerManager consumerManager,
             IUAVTelemetryDataStorage storage,
-            IActiveUAVFetcher activeUavFetcher
+            IUAVFetcher activeUavFetcher
         )
         {
             _wantedFieldsManager = wantedFieldsManager;
             _consumerManager = consumerManager;
             _storage = storage;
-            _activeUAVFetcher = activeUavFetcher;
+            _UAVFetcher = activeUavFetcher;
         }
 
         public async void CreateSession(string sessionId, IEnumerable<UAVFieldSubscription> wantedFields, CancellationToken cancellationToken = default)
@@ -131,7 +130,7 @@ namespace LTS.Services.SessionManagement
             }
 
 
-            IEnumerable<int> allDiscoveredUavIds = await _activeUAVFetcher.GetActiveUAVsTailId(cancellationToken);
+            IEnumerable<int> allDiscoveredUavIds = await _UAVFetcher.GetActiveUAVsTailIdAsync(cancellationToken);
 
             IEnumerable<UAVFieldSubscription> expandedWildcardSubscriptions =
                 allDiscoveredUavIds.Select(uavId => new UAVFieldSubscription(

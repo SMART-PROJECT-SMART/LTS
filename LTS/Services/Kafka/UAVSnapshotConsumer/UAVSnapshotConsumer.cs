@@ -3,8 +3,8 @@ using Core.Common.Enums;
 using LTS.Common;
 using LTS.Configuration;
 using LTS.Dto;
+using LTS.Services.ActiveUAVFetcher.Interfaces;
 using LTS.Services.Kafka.UAVSnapshotConsumer.Interfaces;
-using LTS.Services.Kafka.UAVTopicDiscovery.Interfaces;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
@@ -13,22 +13,22 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
     public class UAVSnapshotConsumer : IUAVSnapshotConsumer, IDisposable
     {
         private readonly IConsumer<string, string> _kafkaConsumer;
-        private readonly IUAVTopicDiscoveryService _topicDiscoveryService;
+        private readonly IUAVFetcher _activeUAVFetcher;
         private readonly TimeSpan _consumeTimeout;
 
         public UAVSnapshotConsumer(
             IOptions<KafkaConsumerConfiguration> configuration,
-            IUAVTopicDiscoveryService topicDiscoveryService
+            IUAVFetcher activeUAVFetcher
         )
         {
             _kafkaConsumer = CreateConsumer(configuration.Value);
-            _topicDiscoveryService = topicDiscoveryService;
+            _activeUAVFetcher = activeUAVFetcher;
             _consumeTimeout = TimeSpan.FromSeconds(LTSConstants.Kafka.CONSUME_TIMEOUT_SECONDS);
         }
 
-        public IEnumerable<UAVTelemetryDataDto> PeekAllUAVSnapshots()
+        public async Task<IEnumerable<UAVTelemetryDataDto>> PeekAllUAVSnapshots()
         {
-            IEnumerable<int> uavIds = _topicDiscoveryService.GetAllCachedUAVIds();
+            IEnumerable<int> uavIds = await _activeUAVFetcher.GetAllUAVsTailIdAsync();
             List<UAVTelemetryDataDto> snapshots = new List<UAVTelemetryDataDto>();
 
             foreach (int id in uavIds)
