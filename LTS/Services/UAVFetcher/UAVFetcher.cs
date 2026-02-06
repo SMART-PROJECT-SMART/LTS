@@ -26,17 +26,17 @@ namespace LTS.Services.ActiveUAVFetcher
             return activeUAVs ?? Enumerable.Empty<int>();
         }
 
-        public async Task<IEnumerable<int>> GetAllUAVsTailIdAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<SimulatorUAVDto>> GetAllUAVsDataAsync(CancellationToken cancellationToken = default)
         {
             HttpResponseMessage allUAVResponse =
                 await _simulatorHttpClient.GetAsync(LTSConstants.SimulatorEndpoints.GET_ALL_UAV_ENDPOINT, cancellationToken);
 
             allUAVResponse.EnsureSuccessStatusCode();
 
-            IEnumerable<SimulatorUAVDto>? allUAVsTailId =
+            IEnumerable<SimulatorUAVDto>? allUAVs =
                 await allUAVResponse.Content.ReadFromJsonAsync<IEnumerable<SimulatorUAVDto>>(cancellationToken);
 
-            return allUAVsTailId?.Select(uav => uav.TailId) ?? Enumerable.Empty<int>();
+            return allUAVs ?? Enumerable.Empty<SimulatorUAVDto>();
         }
     }
 }

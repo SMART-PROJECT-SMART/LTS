@@ -28,16 +28,13 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
 
         public async Task<IEnumerable<UAVTelemetryDataDto>> PeekAllUAVSnapshots()
         {
-            IEnumerable<int> uavIds = await _activeUAVFetcher.GetAllUAVsTailIdAsync();
+            IEnumerable<SimulatorUAVDto> allUAVs = await _activeUAVFetcher.GetAllUAVsDataAsync();
             List<UAVTelemetryDataDto> snapshots = new List<UAVTelemetryDataDto>();
 
-            foreach (int id in uavIds)
+            foreach (SimulatorUAVDto uav in allUAVs)
             {
-                UAVTelemetryDataDto? snapshot = FetchSnapshot(id);
-                if (snapshot != null)
-                {
-                    snapshots.Add(snapshot);
-                }
+                UAVTelemetryDataDto snapshot = FetchSnapshotOrDefault(uav);
+                snapshots.Add(snapshot);
             }
 
             return snapshots;
@@ -48,22 +45,42 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
             _kafkaConsumer.Dispose();
         }
 
-        private UAVTelemetryDataDto? FetchSnapshot(int uavId)
+        private UAVTelemetryDataDto FetchSnapshotOrDefault(SimulatorUAVDto uav)
         {
-            TopicPartition partition = CreatePartition(uavId);
+            TopicPartition partition = CreatePartition(uav.TailId);
             Offset? offset = QueryLatestOffset(partition);
 
             if (offset == null)
-                return null;
+                return CreateDefaultTelemetryData(uav);
 
             string? payload = ConsumeAtOffset(partition, offset.Value);
 
             if (payload == null)
-                return null;
+                return CreateDefaultTelemetryData(uav);
 
             Dictionary<TelemetryFields, double> telemetry = ParseTelemetry(payload);
             UAVType uavType = ExtractUAVType(telemetry);
-            return new UAVTelemetryDataDto(uavId, uavType, telemetry);
+            return new UAVTelemetryDataDto(uav.TailId, uavType, telemetry);
+        }
+
+        private UAVTelemetryDataDto CreateDefaultTelemetryData(SimulatorUAVDto uav)
+        {
+            Dictionary<TelemetryFields, double> defaultTelemetry = new Dictionary<TelemetryFields, double>();
+
+            foreach (TelemetryFields field in Enum.GetValues<TelemetryFields>())
+            {
+                defaultTelemetry[field] = field switch
+                {
+                    TelemetryFields.Latitude => uav.BaseLocation.Latitude,
+                    TelemetryFields.Longitude => uav.BaseLocation.Longitude,
+                    TelemetryFields.Altitude => uav.BaseLocation.Altitude,
+                    TelemetryFields.UAVTypeValue => (double)uav.PlatformType,
+                    TelemetryFields.TailId => uav.TailId,
+                    _ => 0.0
+                };
+            }
+
+            return new UAVTelemetryDataDto(uav.TailId, uav.PlatformType, defaultTelemetry);
         }
 
         private static UAVType ExtractUAVType(Dictionary<TelemetryFields, double> telemetry)
