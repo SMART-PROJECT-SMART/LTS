@@ -105,17 +105,23 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
 
         private Offset? QueryLatestOffset(TopicPartition partition)
         {
-            WatermarkOffsets? watermarks = _kafkaConsumer.QueryWatermarkOffsets(
-                partition,
-                _consumeTimeout
-            );
-
-            if (watermarks.High.Value <= LTSConstants.Kafka.EMPTY_TOPIC_OFFSET || watermarks.High <= watermarks.Low)
+            try
             {
+                WatermarkOffsets? watermarks = _kafkaConsumer.QueryWatermarkOffsets(
+                    partition,
+                    _consumeTimeout
+                );
+
+                if (watermarks.High.Value <= LTSConstants.Kafka.EMPTY_TOPIC_OFFSET || watermarks.High <= watermarks.Low)
+                {
+                    return null;
+                }
+
+                return watermarks.High - LTSConstants.Kafka.LAST_MESSAGE_OFFSET_ADJUSTMENT;
+            }
+            catch (KafkaException) {
                 return null;
             }
-
-            return watermarks.High - LTSConstants.Kafka.LAST_MESSAGE_OFFSET_ADJUSTMENT;
         }
 
         private string? ConsumeAtOffset(TopicPartition partition, Offset offset)
