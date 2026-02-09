@@ -65,6 +65,8 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
 
         private UAVTelemetryDataDto CreateDefaultTelemetryData(SimulatorUAVDto uav)
         {
+            UAVType uavType = MapPlatformTypeToUAVType(uav.PlatformType);
+
             Dictionary<TelemetryFields, double> defaultTelemetry = new Dictionary<TelemetryFields, double>();
 
             foreach (TelemetryFields field in Enum.GetValues<TelemetryFields>())
@@ -74,13 +76,26 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
                     TelemetryFields.Latitude => uav.BaseLocation.Latitude,
                     TelemetryFields.Longitude => uav.BaseLocation.Longitude,
                     TelemetryFields.Altitude => uav.BaseLocation.Altitude,
-                    TelemetryFields.UAVTypeValue => (double)uav.PlatformType,
+                    TelemetryFields.UAVTypeValue => (double)uavType,
+                    TelemetryFields.PlatformType => (double)uav.PlatformType,
                     TelemetryFields.TailId => uav.TailId,
                     _ => 0.0
                 };
             }
 
-            return new UAVTelemetryDataDto(uav.TailId, uav.PlatformType, defaultTelemetry);
+            return new UAVTelemetryDataDto(uav.TailId, uavType, defaultTelemetry);
+        }
+
+        private static UAVType MapPlatformTypeToUAVType(PlatformType platformType)
+        {
+            return platformType switch
+            {
+                PlatformType.Searcher => UAVType.Surveillance,
+                PlatformType.Hermes450 => UAVType.Surveillance,
+                PlatformType.HeronTP => UAVType.Armed,
+                PlatformType.Hermes900 => UAVType.Armed,
+                _ => UAVType.Surveillance
+            };
         }
 
         private static UAVType ExtractUAVType(Dictionary<TelemetryFields, double> telemetry)
