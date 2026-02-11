@@ -1,4 +1,3 @@
-using System.Collections;
 using Core.Common.Enums;
 using LTS.Common;
 using LTS.Models;
@@ -7,6 +6,7 @@ using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
 using LTS.Services.SessionManagement.Interfaces;
 using LTS.Services.UAVDataStorage.Interfaces;
 using LTS.Services.WantedFieldsManager.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace LTS.Services.SessionManagement
 {
@@ -16,25 +16,35 @@ namespace LTS.Services.SessionManagement
         private readonly IUAVTelemetryDataKafkaConsumerManager _consumerManager;
         private readonly IUAVTelemetryDataStorage _storage;
         private readonly IUAVFetcher _UAVFetcher;
+        private readonly ILogger<SessionManagementService> _logger;
 
         public SessionManagementService(
             IWantedUAVFieldsManager wantedFieldsManager,
             IUAVTelemetryDataKafkaConsumerManager consumerManager,
             IUAVTelemetryDataStorage storage,
-            IUAVFetcher activeUavFetcher
+            IUAVFetcher activeUavFetcher,
+            ILogger<SessionManagementService> logger
         )
         {
             _wantedFieldsManager = wantedFieldsManager;
             _consumerManager = consumerManager;
             _storage = storage;
             _UAVFetcher = activeUavFetcher;
+            _logger = logger;
         }
 
         public async void CreateSession(string sessionId, IEnumerable<UAVFieldSubscription> wantedFields, CancellationToken cancellationToken = default)
         {
-            IEnumerable<UAVFieldSubscription> expandedFields = await ExpandWildcardSubscriptions(wantedFields, cancellationToken);
-            _wantedFieldsManager.CreateSession(sessionId, expandedFields);
-            RegisterNewUAVs(expandedFields.Select(subscription => subscription.TailId));
+            try
+            {
+                IEnumerable<UAVFieldSubscription> expandedFields = await ExpandWildcardSubscriptions(wantedFields, cancellationToken);
+                _wantedFieldsManager.CreateSession(sessionId, expandedFields);
+                RegisterNewUAVs(expandedFields.Select(subscription => subscription.TailId));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create session {SessionId}.", sessionId);
+            }
         }
 
         public async Task<Result<bool>> UpdateSession(
