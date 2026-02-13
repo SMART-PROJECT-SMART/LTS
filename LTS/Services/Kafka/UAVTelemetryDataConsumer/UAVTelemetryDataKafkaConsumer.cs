@@ -2,20 +2,22 @@ using Confluent.Kafka;
 using LTS.Common;
 using LTS.Configuration;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
 {
     public class UAVTelemetryDataKafkaConsumer : IUAVTelemetryDataKafkaConsumer
     {
+        private static readonly TimeSpan ConsumeTimeout = TimeSpan.FromMilliseconds(100);
+
         private readonly IConsumer<string, string> _kafkaConsumer;
         private bool _isDisposed;
+
         public UAVTelemetryDataKafkaConsumer(
             KafkaConsumerConfiguration kafkaConsumerConfiguration,
             string tailId)
         {
             _isDisposed = false;
+
             var consumerConfig = new ConsumerConfig
             {
                 BootstrapServers = kafkaConsumerConfiguration.BootstrapServers,
@@ -31,16 +33,45 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
             _kafkaConsumer.Subscribe($"{LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX}{tailId}");
         }
 
-        public ConsumeResult<string, string> ConsumeUAVTelemetryData()
+        public ConsumeResult<string, string>? ConsumeUAVTelemetryData()
         {
-            return !_isDisposed ? _kafkaConsumer.Consume() : null;
+            if (_isDisposed)
+            {
+                return null;
+            }
+
+            try
+            {
+                return _kafkaConsumer.Consume(ConsumeTimeout);
+            }
+            catch (ConsumeException)
+            {
+                return null;
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
+            }
         }
 
         public void Dispose()
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+
             _isDisposed = true;
-            _kafkaConsumer.Unsubscribe();
-            _kafkaConsumer.Dispose();
+
+            try
+            {
+                _kafkaConsumer.Unsubscribe();
+                _kafkaConsumer.Close();
+                _kafkaConsumer.Dispose();
+            }
+            catch
+            {
+            }
         }
     }
 }

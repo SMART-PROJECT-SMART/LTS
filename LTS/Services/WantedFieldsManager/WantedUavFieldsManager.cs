@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using Core.Common.Enums;
 using LTS.Models;
 using LTS.Services.UAVTelemetryFieldsReferenceCounter.Interfaces;

@@ -1,4 +1,4 @@
-﻿using LTS.Common;
+using LTS.Common;
 using LTS.Models;
 using LTS.Services.SessionManagement.Interfaces;
 using Microsoft.AspNetCore.SignalR;

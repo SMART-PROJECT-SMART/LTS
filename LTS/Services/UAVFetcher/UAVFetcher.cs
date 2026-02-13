@@ -1,19 +1,16 @@
 using LTS.Common;
 using LTS.Dto;
 using LTS.Services.ActiveUAVFetcher.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace LTS.Services.ActiveUAVFetcher
 {
     public class UAVFetcher : IUAVFetcher
     {
         private readonly HttpClient _simulatorHttpClient;
-        private readonly ILogger<UAVFetcher> _logger;
 
-        public UAVFetcher(IHttpClientFactory httpClientFactory, ILogger<UAVFetcher> logger)
+        public UAVFetcher(IHttpClientFactory httpClientFactory)
         {
             _simulatorHttpClient = httpClientFactory.CreateClient(LTSConstants.HttpClients.SIMULATOR_HTTP_CLIENT);
-            _logger = logger;
         }
 
         public async Task<IEnumerable<int>> GetActiveUAVsTailIdAsync(CancellationToken cancellationToken)
@@ -30,14 +27,12 @@ namespace LTS.Services.ActiveUAVFetcher
 
                 return activeUAVs ?? Enumerable.Empty<int>();
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException)
             {
-                _logger.LogError(ex, "Failed to fetch active UAVs from simulator service.");
                 return Enumerable.Empty<int>();
             }
-            catch (TaskCanceledException ex)
+            catch (TaskCanceledException)
             {
-                _logger.LogWarning(ex, "Request to fetch active UAVs was cancelled or timed out.");
                 return Enumerable.Empty<int>();
             }
         }
@@ -56,14 +51,12 @@ namespace LTS.Services.ActiveUAVFetcher
 
                 return allUAVs ?? Enumerable.Empty<SimulatorUAVDto>();
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException)
             {
-                _logger.LogError(ex, "Failed to fetch all UAVs data from simulator service.");
                 return Enumerable.Empty<SimulatorUAVDto>();
             }
-            catch (TaskCanceledException ex)
+            catch (TaskCanceledException)
             {
-                _logger.LogWarning(ex, "Request to fetch all UAVs data was cancelled or timed out.");
                 return Enumerable.Empty<SimulatorUAVDto>();
             }
         }

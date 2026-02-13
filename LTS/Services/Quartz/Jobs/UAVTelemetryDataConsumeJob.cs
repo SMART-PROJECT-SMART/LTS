@@ -1,9 +1,8 @@
-﻿using Confluent.Kafka;
+using Confluent.Kafka;
 using Core.Common.Enums;
 using LTS.Common;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
 using LTS.Services.UAVDataStorage.Interfaces;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Quartz;
 using static System.Int32;
@@ -14,17 +13,14 @@ namespace LTS.Services.Quartz.Jobs
     {
         private readonly IUAVTelemetryDataKafkaConsumerManager _uavTelemetryDataKafkaConsumerManager;
         private readonly IUAVTelemetryDataStorage _uavTelemetryDataStorage;
-        private readonly ILogger<UAVTelemetryDataConsumeJob> _logger;
 
         public UAVTelemetryDataConsumeJob(
             IUAVTelemetryDataKafkaConsumerManager uavTelemetryDataKafkaConsumerManager,
-            IUAVTelemetryDataStorage uavTelemetryDataStorage,
-            ILogger<UAVTelemetryDataConsumeJob> logger
+            IUAVTelemetryDataStorage uavTelemetryDataStorage
         )
         {
             _uavTelemetryDataKafkaConsumerManager = uavTelemetryDataKafkaConsumerManager;
             _uavTelemetryDataStorage = uavTelemetryDataStorage;
-            _logger = logger;
         }
 
         public Task Execute(IJobExecutionContext context)
@@ -51,12 +47,11 @@ namespace LTS.Services.Quartz.Jobs
 
                 _uavTelemetryDataStorage.SaveUAVTelemetryData(tailId, telemetryData);
             }
+
             return Task.CompletedTask;
         }
 
-        private IEnumerable<KeyValuePair<TelemetryFields, double>> DeserializeTelemetryData(
-            string json
-        )
+        private IEnumerable<KeyValuePair<TelemetryFields, double>> DeserializeTelemetryData(string json)
         {
             Dictionary<TelemetryFields, double> telemetryDict = JsonConvert.DeserializeObject<
                 Dictionary<TelemetryFields, double>

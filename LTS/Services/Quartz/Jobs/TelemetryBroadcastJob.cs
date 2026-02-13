@@ -14,19 +14,16 @@ namespace LTS.Services.Quartz.Jobs
         private readonly IUAVTelemetryDataStorage _uavTelemetryDataStorage;
         private readonly IWantedUAVFieldsManager _wantedUavFieldsManager;
         private readonly IHubContext<TelemetryBroadcastHub> _hubContext;
-        private readonly ILogger<TelemetryBroadcastJob> _logger;
 
         public TelemetryBroadcastJob(
             IUAVTelemetryDataStorage uavTelemetryDataStorage,
             IWantedUAVFieldsManager wantedUavFieldsManager,
-            IHubContext<TelemetryBroadcastHub> hubContext,
-            ILogger<TelemetryBroadcastJob> logger
+            IHubContext<TelemetryBroadcastHub> hubContext
         )
         {
             _uavTelemetryDataStorage = uavTelemetryDataStorage;
             _wantedUavFieldsManager = wantedUavFieldsManager;
             _hubContext = hubContext;
-            _logger = logger;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -49,9 +46,7 @@ namespace LTS.Services.Quartz.Jobs
             Dictionary<int, HashSet<TelemetryFields>> sessionWantedFields =
                 _wantedUavFieldsManager.GetSessionWantedFieldsById(sessionId)!;
 
-            List<UAVTelemetryFieldsDto> uavDataList = BuildUAVTelemetryDataList(
-                sessionWantedFields
-            );
+            List<UAVTelemetryFieldsDto> uavDataList = BuildUAVTelemetryDataList(sessionWantedFields);
 
             if (uavDataList.Count > 0)
             {

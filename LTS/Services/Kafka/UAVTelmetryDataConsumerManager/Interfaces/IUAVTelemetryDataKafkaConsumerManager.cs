@@ -1,8 +1,8 @@
-﻿using Confluent.Kafka;
+using Confluent.Kafka;
 
 namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces
 {
-    public interface IUAVTelemetryDataKafkaConsumerManager
+    public interface IUAVTelemetryDataKafkaConsumerManager : IDisposable
     {
         public void AddConsumer(string tailId);
         public void RemoveConsumer(string tailId);

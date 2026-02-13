@@ -1,11 +1,9 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using Confluent.Kafka;
-using LTS.Common;
 using LTS.Configuration;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer;
 using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
@@ -14,19 +12,22 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
     {
         private readonly ConcurrentDictionary<string, IUAVTelemetryDataKafkaConsumer> _consumers;
         private readonly KafkaConsumerConfiguration _kafkaConfig;
-        private readonly ILogger<UAVTelemetryDataKafkaConsumerManager> _logger;
+        private bool _isDisposed;
 
-        public UAVTelemetryDataKafkaConsumerManager(
-            IOptions<KafkaConsumerConfiguration> kafkaConfig,
-            ILogger<UAVTelemetryDataKafkaConsumerManager> logger)
+        public UAVTelemetryDataKafkaConsumerManager(IOptions<KafkaConsumerConfiguration> kafkaConfig)
         {
             _kafkaConfig = kafkaConfig.Value;
             _consumers = new ConcurrentDictionary<string, IUAVTelemetryDataKafkaConsumer>();
-            _logger = logger;
+            _isDisposed = false;
         }
 
         public void AddConsumer(string tailId)
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+
             _consumers.GetOrAdd(tailId, key =>
             {
                 IUAVTelemetryDataKafkaConsumer newConsumer =
@@ -45,19 +46,45 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
 
         public IEnumerable<ConsumeResult<string, string>> ConsumeUAVTelemetryData()
         {
+            if (_isDisposed)
+            {
+                yield break;
+            }
 
             foreach (KeyValuePair<string, IUAVTelemetryDataKafkaConsumer> consumerEntry in _consumers)
             {
-                string tailId = consumerEntry.Key;
                 IUAVTelemetryDataKafkaConsumer consumer = consumerEntry.Value;
 
-                ConsumeResult<string, string> uavsTelmetryData = consumer.ConsumeUAVTelemetryData();
+                ConsumeResult<string, string>? uavsTelmetryData = consumer.ConsumeUAVTelemetryData();
 
                 if (uavsTelmetryData != null)
                 {
                     yield return uavsTelmetryData;
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            _isDisposed = true;
+
+            foreach (var consumer in _consumers.Values)
+            {
+                try
+                {
+                    consumer.Dispose();
+                }
+                catch
+                {
+                }
+            }
+
+            _consumers.Clear();
         }
     }
 }
