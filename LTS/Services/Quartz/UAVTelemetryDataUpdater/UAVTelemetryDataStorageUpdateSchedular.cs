@@ -1,4 +1,4 @@
-﻿using LTS.Common;
+using LTS.Common;
 using LTS.Services.Quartz.Jobs;
 using LTS.Services.Quartz.UAVTelemetryDataUpdater.Interfaces;
 using Quartz;
@@ -26,15 +26,15 @@ namespace LTS.Services.Quartz.UAVTelemetryDataUpdater
         private ITrigger CreateUAVTelemetryDataConsumerTrigger(int intervalSeconds)
         {
             JobKey jobKey = new JobKey(
-                LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_ID,
-                LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP
+                LTSConstants.Quartz.TELEMETRY_CYCLE_JOB_ID,
+                LTSConstants.Quartz.TELEMETRY_CYCLE_JOB_GROUP
             );
 
             return TriggerBuilder
                 .Create()
                 .WithIdentity(
-                    LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_TRIGGER_ID,
-                    LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP
+                    LTSConstants.Quartz.TELEMETRY_CYCLE_TRIGGER_ID,
+                    LTSConstants.Quartz.TELEMETRY_CYCLE_JOB_GROUP
                 )
                 .ForJob(jobKey)
                 .StartNow()

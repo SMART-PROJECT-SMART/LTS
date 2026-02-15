@@ -15,16 +15,19 @@ namespace LTS.Services.Quartz.Jobs
         private readonly IUAVTelemetryDataStorage _uavTelemetryDataStorage;
         private readonly IWantedUAVFieldsManager _wantedUavFieldsManager;
         private readonly IHubContext<TelemetryBroadcastHub> _hubContext;
+        private readonly ILogger<TelemetryBroadcastJob> _logger;
 
         public TelemetryBroadcastJob(
             IUAVTelemetryDataStorage uavTelemetryDataStorage,
             IWantedUAVFieldsManager wantedUavFieldsManager,
-            IHubContext<TelemetryBroadcastHub> hubContext
+            IHubContext<TelemetryBroadcastHub> hubContext,
+            ILogger<TelemetryBroadcastJob> logger
         )
         {
             _uavTelemetryDataStorage = uavTelemetryDataStorage;
             _wantedUavFieldsManager = wantedUavFieldsManager;
             _hubContext = hubContext;
+            _logger = logger;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -52,6 +55,22 @@ namespace LTS.Services.Quartz.Jobs
             if (uavDataList.Count > 0)
             {
                 TelemetryBroadcastDto broadcastDto = new TelemetryBroadcastDto(uavDataList);
+                _logger.LogInformation(
+                    "[Broadcast] sessionId={SessionId} uavCount={UavCount}",
+                    sessionId,
+                    broadcastDto.UavData.Count
+                );
+                foreach (UAVTelemetryFieldsDto uav in broadcastDto.UavData)
+                {
+                    double lat = uav.Fields?.TryGetValue(TelemetryFields.Latitude, out double la) == true ? la : 0;
+                    double lon = uav.Fields?.TryGetValue(TelemetryFields.Longitude, out double lo) == true ? lo : 0;
+                    _logger.LogInformation(
+                        "[Broadcast]   tailId={TailId} lat={Lat:F6} lon={Lon:F6}",
+                        uav.TailId,
+                        lat,
+                        lon
+                    );
+                }
                 await SendBroadcastToSession(sessionId, broadcastDto);
             }
         }

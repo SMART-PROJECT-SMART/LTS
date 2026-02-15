@@ -12,11 +12,16 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
     {
         private readonly ConcurrentDictionary<string, IUAVTelemetryDataKafkaConsumer> _consumers;
         private readonly KafkaConsumerConfiguration _kafkaConfig;
+        private readonly ILogger<UAVTelemetryDataKafkaConsumerManager> _logger;
         private bool _isDisposed;
 
-        public UAVTelemetryDataKafkaConsumerManager(IOptions<KafkaConsumerConfiguration> kafkaConfig)
+        public UAVTelemetryDataKafkaConsumerManager(
+            IOptions<KafkaConsumerConfiguration> kafkaConfig,
+            ILogger<UAVTelemetryDataKafkaConsumerManager> logger
+        )
         {
             _kafkaConfig = kafkaConfig.Value;
+            _logger = logger;
             _consumers = new ConcurrentDictionary<string, IUAVTelemetryDataKafkaConsumer>();
             _isDisposed = false;
         }
@@ -49,6 +54,17 @@ namespace LTS.Services.Kafka.UAVTelmetryDataConsumerManager
             if (_isDisposed)
             {
                 yield break;
+            }
+
+            int consumerCount = _consumers.Count;
+            if (consumerCount > 0)
+            {
+                string keys = string.Join(",", _consumers.Keys);
+                _logger.LogInformation(
+                    "[Consume] polling consumerCount={Count} tailIds=[{TailIds}]",
+                    consumerCount,
+                    keys
+                );
             }
 
             foreach (KeyValuePair<string, IUAVTelemetryDataKafkaConsumer> consumerEntry in _consumers)

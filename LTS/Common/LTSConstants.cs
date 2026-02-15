@@ -26,14 +26,9 @@ namespace LTS.Common
 
         public static class Quartz
         {
-            public const string UAV_TELEMETRY_DATA_CONSUME_JOB_ID = "UAVTelemetryDataConsumeJob";
-            public const string UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP =
-                "UAVTelemetryDataConsumeJobGroup";
-            public const string UAV_TELEMETRY_DATA_CONSUME_TRIGGER_ID =
-                "UAVTelemetryDataConsumeTrigger";
-            public const string TELEMETRY_BROADCAST_JOB_ID = "TelemetryBroadcastJob";
-            public const string TELEMETRY_BROADCAST_JOB_GROUP = "TelemetryBroadcastJobGroup";
-            public const string TELEMETRY_BROADCAST_TRIGGER_ID = "TelemetryBroadcastTrigger";
+            public const string TELEMETRY_CYCLE_JOB_ID = "TelemetryCycleJob";
+            public const string TELEMETRY_CYCLE_JOB_GROUP = "TelemetryCycleJobGroup";
+            public const string TELEMETRY_CYCLE_TRIGGER_ID = "TelemetryCycleTrigger";
         }
 
         public static class Scheduler

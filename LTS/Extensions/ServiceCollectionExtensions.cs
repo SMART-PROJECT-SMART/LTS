@@ -1,4 +1,4 @@
-﻿using LTS.Common;
+using LTS.Common;
 using LTS.Configuration;
 using LTS.Services.ActiveUAVFetcher;
 using LTS.Services.ActiveUAVFetcher.Interfaces;
@@ -9,8 +9,6 @@ using LTS.Services.Kafka.UAVTelemetryDataConsumer.Interfaces;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager;
 using LTS.Services.Kafka.UAVTelmetryDataConsumerManager.Interfaces;
 using LTS.Services.Quartz.Jobs;
-using LTS.Services.Quartz.TelemetryBroadcast;
-using LTS.Services.Quartz.TelemetryBroadcast.Interfaces;
 using LTS.Services.Quartz.UAVTelemetryDataUpdater;
 using LTS.Services.Quartz.UAVTelemetryDataUpdater.Interfaces;
 using LTS.Services.SessionManagement;
@@ -117,22 +115,18 @@ namespace LTS.Extensions
 
             services.AddQuartz(q =>
             {
-                q.AddJob<UAVTelemetryDataConsumeJob>(opts =>
+                q.AddJob<TelemetryCycleJob>(opts =>
                     opts.WithIdentity(
-                            LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_ID,
-                            LTSConstants.Quartz.UAV_TELEMETRY_DATA_CONSUME_JOB_GROUP
-                        )
-                        .StoreDurably()
-                );
-
-                q.AddJob<TelemetryBroadcastJob>(opts =>
-                    opts.WithIdentity(
-                            LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_ID,
-                            LTSConstants.Quartz.TELEMETRY_BROADCAST_JOB_GROUP
+                            LTSConstants.Quartz.TELEMETRY_CYCLE_JOB_ID,
+                            LTSConstants.Quartz.TELEMETRY_CYCLE_JOB_GROUP
                         )
                         .StoreDurably()
                 );
             });
+
+            services.AddTransient<UAVTelemetryDataConsumeJob>();
+            services.AddTransient<TelemetryBroadcastJob>();
+            services.AddTransient<TelemetryCycleJob>();
 
             services.AddQuartzHostedService(options =>
             {
@@ -143,8 +137,6 @@ namespace LTS.Extensions
                 IUAVTelemetryDataStorageUpdateSchedular,
                 UAVTelemetryDataStorageUpdateSchedular
             >();
-
-            services.AddSingleton<ITelemetryBroadcastSchedular, TelemetryBroadcastSchedular>();
 
             return services;
         }
@@ -177,11 +169,8 @@ namespace LTS.Extensions
 
             IUAVTelemetryDataStorageUpdateSchedular consumeSchedular =
                 app.Services.GetRequiredService<IUAVTelemetryDataStorageUpdateSchedular>();
-            ITelemetryBroadcastSchedular broadcastSchedular =
-                app.Services.GetRequiredService<ITelemetryBroadcastSchedular>();
 
             await consumeSchedular.StartSchedular(schedulerConfig.Value.ConsumeIntervalSeconds);
-            await broadcastSchedular.StartSchedular(schedulerConfig.Value.BroadcastIntervalSeconds);
 
             return app;
         }
