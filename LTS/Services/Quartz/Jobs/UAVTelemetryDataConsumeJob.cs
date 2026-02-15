@@ -9,6 +9,7 @@ using static System.Int32;
 
 namespace LTS.Services.Quartz.Jobs
 {
+    [DisallowConcurrentExecution]
     public class UAVTelemetryDataConsumeJob : IJob
     {
         private readonly IUAVTelemetryDataKafkaConsumerManager _uavTelemetryDataKafkaConsumerManager;

@@ -9,6 +9,7 @@ using Quartz;
 
 namespace LTS.Services.Quartz.Jobs
 {
+    [DisallowConcurrentExecution]
     public class TelemetryBroadcastJob : IJob
     {
         private readonly IUAVTelemetryDataStorage _uavTelemetryDataStorage;

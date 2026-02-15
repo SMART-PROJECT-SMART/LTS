@@ -1,4 +1,4 @@
-﻿namespace LTS.Common
+namespace LTS.Common
 {
     public static class LTSConstants
     {
@@ -8,6 +8,7 @@
             public const string UAV_DATA_TOPIC_PREFIX = "telemetry-tailId-";
             public const string SNAPSHOT_CONSUMER_GROUP_SUFFIX = "-snapshot";
             public const int DEFAULT_PARTITION = 1;
+            public const int CANONICAL_TELEMETRY_PARTITION = 0;
             public const int METADATA_TIMEOUT_SECONDS = 10;
             public const int CONSUME_TIMEOUT_SECONDS = 1;
             public const long EMPTY_TOPIC_OFFSET = 0;

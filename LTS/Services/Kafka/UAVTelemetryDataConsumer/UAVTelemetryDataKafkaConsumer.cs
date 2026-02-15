@@ -30,7 +30,9 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
                 .SetValueDeserializer(Deserializers.Utf8)
                 .Build();
 
-            _kafkaConsumer.Subscribe($"{LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX}{tailId}");
+            string topicName = $"{LTSConstants.Kafka.UAV_DATA_TOPIC_PREFIX}{tailId}";
+            var partition = new Partition(LTSConstants.Kafka.CANONICAL_TELEMETRY_PARTITION);
+            _kafkaConsumer.Assign(new[] { new TopicPartition(topicName, partition) });
         }
 
         public ConsumeResult<string, string>? ConsumeUAVTelemetryData()
@@ -65,7 +67,7 @@ namespace LTS.Services.Kafka.UAVTelemetryDataConsumer
 
             try
             {
-                _kafkaConsumer.Unsubscribe();
+                _kafkaConsumer.Unassign();
                 _kafkaConsumer.Close();
                 _kafkaConsumer.Dispose();
             }
