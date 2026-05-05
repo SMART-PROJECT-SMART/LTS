@@ -51,12 +51,16 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
             Offset? offset = QueryLatestOffset(partition);
 
             if (offset == null)
+            {
                 return CreateDefaultTelemetryData(uav);
+            }
 
             string? payload = ConsumeAtOffset(partition, offset.Value);
 
             if (payload == null)
+            {
                 return CreateDefaultTelemetryData(uav);
+            }
 
             Dictionary<TelemetryFields, double> telemetry = ParseTelemetry(payload);
             UAVType uavType = ExtractUAVType(telemetry);
@@ -79,10 +83,12 @@ namespace LTS.Services.Kafka.UAVSnapshotConsumer
                     TelemetryFields.UAVTypeValue => (double)uavType,
                     TelemetryFields.PlatformType => (double)uav.PlatformType,
                     TelemetryFields.TailId => uav.TailId,
+                    TelemetryFields.FuelAmount => LtsPreflightTelemetryDefaults.FullFuelPercentage,
+                    TelemetryFields.AmmoPercentage => LtsPreflightTelemetryDefaults
+                        .DefaultAmmoPercentage(uavType),
                     _ => 0.0
                 };
             }
-
             return new UAVTelemetryDataDto(uav.TailId, uavType, defaultTelemetry);
         }
 
